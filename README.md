@@ -10,6 +10,7 @@ Bu yapı ile asistanı tek bir genel bot yerine, görev bazlı uzman rollere dö
 
 ## İçindekiler
 - [Hızlı Başlangıç (2 Dakika)](#hızlı-başlangıç-2-dakika)
+- [Kurulum Sonrası Kullanım (Direkt Prompt)](#kurulum-sonrası-kullanım-direkt-prompt)
 - [Temel Kavramlar](#temel-kavramlar)
 - [CLI Komut Rehberi](#cli-komut-rehberi)
 - [AI Platform Matrisi](#ai-platform-matrisi)
@@ -39,6 +40,45 @@ agentskills init
 Notlar:
 - `--agent` ve `--domain` aynı komutta birlikte kullanılmaz.
 - `--ai all` kısa yolu sadece `cursor`, `claude`, `copilot` için kurulum yapar.
+
+## Kurulum Sonrası Kullanım (Direkt Prompt)
+
+Kısa cevap: Evet, kurulumdan sonra çoğu durumda direkt prompt yazmanız yeterlidir.
+
+Doğru akış:
+1. Proje kökünde AgentSkills kurulum komutunu çalıştırın.
+2. AI asistanının okuduğu hedef klasörün oluştuğunu doğrulayın (`.cursor/rules`, `.claude`, `.github`).
+3. IDE/AI chat panelini yeniden başlatın veya yeni sohbet açın.
+4. İsteğinizi direkt yazın.
+
+Harita mühendisliği için modern web sitesi örneği:
+
+```bash
+# Tasarım + frontend odaklı domain kurulumu
+agentskills init --domain frontend --ai cursor
+```
+
+Sonra AI chat'e direkt yazabilirsiniz:
+
+```text
+Harita mühendisligi firmasi icin modern, mobil uyumlu bir websitesi tasarimi olustur.
+Ana sayfa, hizmetler, projeler, iletisim ve teklif formu bolumleri olsun.
+Renk paleti kurumsal ve guven veren tonda olsun.
+```
+
+Daha güçlü sonuç için önerilen prompt:
+
+```text
+Harita muhendisligi firmasi icin modern bir web sitesi tasarla.
+Tech stack: Next.js + Tailwind.
+Sayfalar: Ana Sayfa, Hizmetler, Projeler, Hakkimizda, Iletisim.
+Cikti: once bilgi mimarisi, sonra wireframe mantigi, sonra component listesi, sonra ornek kod.
+```
+
+Ne zaman tekrar `init` gerekir:
+- Farklı bir AI platformuna geçiyorsanız (`cursor` -> `claude` gibi).
+- Farklı domain/agent seti yüklemek istiyorsanız.
+- Global rules, workflows veya agent içeriklerini güncel sürümden yeniden çekmek istiyorsanız.
 
 ## Kurulum Kanalları
 
@@ -253,6 +293,10 @@ sequenceDiagram
 5. Workflow çalışmıyor
 - Neden: Agent kurulmamış veya yanlış platform klasörüne kurulmuş olabilir.
 - Çözüm: İlgili agent’i doğru `--ai` hedefiyle yeniden kurun.
+
+6. `Kurulum yaptım ama direkt prompt etkisiz görünüyor`
+- Neden: AI paneli eski oturumdan kuralları cache'lemiş olabilir.
+- Çözüm: Yeni chat açın veya IDE/AI panelini yeniden başlatın. Gerekirse `agentskills init ...` komutunu proje kökünde tekrar çalıştırın.
 
 ## Katkı
 - Yeni agent eklemek için: `.agents/agents/`
