@@ -5,6 +5,7 @@ const {
     resolveAssistants,
     resolveAgentsForDomain,
     loadLocalDomains,
+    gatherWorkflowFiles,
     normalizeOwnerRepo,
     buildRemoteConfig
 } = require('../index.js');
@@ -36,6 +37,11 @@ async function run() {
     const gameAgents = await resolveAgentsForDomain('game', true);
     assert.ok(Array.isArray(gameAgents));
     assert.ok(gameAgents.includes('game-architect'));
+
+    const workflows = await gatherWorkflowFiles(true);
+    assert.ok(Array.isArray(workflows));
+    assert.ok(workflows.length > 0);
+    assert.ok(workflows.some((w) => w.name === 'audit.md'));
 
     assert.equal(normalizeOwnerRepo('https://github.com/cagriemiracikkapi-projects/AgentSkills.git'), 'cagriemiracikkapi-projects/AgentSkills');
     assert.equal(normalizeOwnerRepo('git@github.com:cagriemiracikkapi-projects/AgentSkills.git'), 'cagriemiracikkapi-projects/AgentSkills');

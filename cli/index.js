@@ -284,6 +284,35 @@ async function gatherSkillFiles(skillPath, useLocal, remoteConfig = activeRemote
     return files;
 }
 
+async function gatherWorkflowFiles(useLocal, remoteConfig = activeRemoteConfig) {
+    const workflows = [];
+
+    if (useLocal) {
+        const workflowDir = path.join(LOCAL_DEV_PATH, 'workflows');
+        if (!fs.existsSync(workflowDir)) return workflows;
+
+        const files = fs.readdirSync(workflowDir)
+            .filter((f) => f.endsWith('.md'))
+            .sort();
+        for (const file of files) {
+            workflows.push({
+                name: file,
+                content: fs.readFileSync(path.join(workflowDir, file), 'utf8')
+            });
+        }
+        return workflows;
+    }
+
+    const files = (await listGithubFiles('workflows', remoteConfig))
+        .filter((f) => f.endsWith('.md'))
+        .sort();
+    for (const file of files) {
+        const content = await fetchFileContent(`workflows/${file}`, false, remoteConfig);
+        if (content) workflows.push({ name: file, content });
+    }
+    return workflows;
+}
+
 async function installAgent(agentName, assistant, useLocal, remoteConfig = activeRemoteConfig) {
     const targetDir = ASSISTANT_PATHS[assistant];
     if (!targetDir) {
@@ -316,8 +345,8 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
     
     // Global Rules
     const globalRules = await fetchFileContent(`global-rules.md`, useLocal, remoteConfig);
-    
-    // Workflows (fetch all for now if available locally or define standard ones)
+    const workflows = await gatherWorkflowFiles(useLocal, remoteConfig);
+    console.log(chalk.gray(`📚 Found ${workflows.length} workflow(s).`));
     
     // Formatting Phase
     if (assistant === 'copilot' || assistant === 'codebuddy') {
@@ -331,6 +360,13 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 bundle += `### Reference: ${ref.name}\n\n${ref.content}\n\n`;
             }
         }
+        if (workflows.length > 0) {
+            bundle += `# Workflows\n\n`;
+            for (const workflow of workflows) {
+                const workflowName = path.basename(workflow.name, '.md');
+                bundle += `## /${workflowName}\n\n${workflow.content}\n\n`;
+            }
+        }
         fs.writeFileSync(path.join(fullTargetDir, `${agentName}-instructions.md`), bundle);
         console.log(chalk.green(`✅ Generated monolithic bundle for ${assistant}.`));
     } 
@@ -339,6 +375,11 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
         const agentDest = path.join(fullTargetDir, `agents`);
         ensureDirSync(agentDest);
         fs.writeFileSync(path.join(agentDest, `${agentName}.md`), pureAgentMd);
+        if (globalRules) {
+            const globalRulesDest = path.join(fullTargetDir, `skills`);
+            ensureDirSync(globalRulesDest);
+            fs.writeFileSync(path.join(globalRulesDest, `global-rules.md`), globalRules);
+        }
         
         for (const s of skillPayloads) {
             const skillDest = path.join(fullTargetDir, `skills`, s.name);
@@ -354,12 +395,29 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 for (const scr of s.scripts) fs.writeFileSync(path.join(skillDest, `scripts`, scr.name), scr.content);
             }
         }
+        if (workflows.length > 0) {
+            const workflowDest = path.join(fullTargetDir, `skills`, `workflows`);
+            ensureDirSync(workflowDest);
+            for (const workflow of workflows) {
+                fs.writeFileSync(path.join(workflowDest, workflow.name), workflow.content);
+            }
+        }
         console.log(chalk.green(`✅ Extracted folders and scripts for ${assistant}.`));
     }
     else {
         // CURSOR / WINDSURF (.mdc or flat structure)
         const isCursorLike = assistant === 'cursor' || assistant === 'windsurf';
         const ext = isCursorLike ? '.mdc' : '.md';
+
+        if (globalRules) {
+            const globalRulesFile = path.join(fullTargetDir, `global-rules${ext}`);
+            if (isCursorLike) {
+                const globalRulesMdc = `---\ndescription: Global Ecosystem Rules\nglobs: *\n---\n\n${globalRules}`;
+                fs.writeFileSync(globalRulesFile, globalRulesMdc);
+            } else {
+                fs.writeFileSync(globalRulesFile, `# Global Rules\n\n${globalRules}`);
+            }
+        }
         
         let agentMdc = `---\ndescription: Agent Persona - ${agentName}\nglobs: *\n---\n\n`;
         agentMdc += `# Global Rules\n${globalRules || ''}\n\n`;
@@ -382,6 +440,10 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 for (const scr of s.scripts) fs.writeFileSync(path.join(scriptDest, scr.name), scr.content);
                 console.log(chalk.gray(`   ↳ Extracted scripts to .agent_scripts/`));
             }
+        }
+        for (const workflow of workflows) {
+            const workflowName = path.basename(workflow.name, '.md');
+            fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
         }
         
         console.log(chalk.green(`✅ Packed Agent and Skills into ${agentName}${ext}`));
@@ -527,6 +589,7 @@ module.exports = {
     resolveAgentsForDomain,
     getAvailableAgentNames,
     loadLocalDomains,
+    gatherWorkflowFiles,
     DEFAULT_DOMAIN_MAP,
     normalizeOwnerRepo,
     buildRemoteConfig,
