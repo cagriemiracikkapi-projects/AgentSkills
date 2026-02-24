@@ -29,6 +29,15 @@ agentskills init --ai copilot     # GitHub Copilot (.github/copilot-instructions
 agentskills init --ai claude      # Claude Code (.claude/skills/ içine kurar)
 agentskills init --ai windsurf    # Windsurf (.windsurf/rules/ içine kurar)
 agentskills init --ai gemini      # Gemini CLI (.gemini/ dizinine kurar)
+agentskills init --ai codex       # Codex (.codex/ dizinine kurar)
+agentskills init --ai qoder       # Qoder (.qoder/ dizinine kurar)
+agentskills init --ai kiro        # Kiro (.kiro/ dizinine kurar)
+agentskills init --ai roocode     # Roo Code (.roocode/ dizinine kurar)
+agentskills init --ai trae        # Trae (.trae/ dizinine kurar)
+agentskills init --ai opencode    # OpenCode (.opencode/ dizinine kurar)
+agentskills init --ai continue    # Continue (.continue/ dizinine kurar)
+agentskills init --ai codebuddy   # Codebuddy (.codebuddy/ dizinine kurar)
+agentskills init --ai droid       # Droid (.factory/ dizinine kurar)
 agentskills init --ai all         # En popüler asistanlara aynı anda kurar
 ```
 
