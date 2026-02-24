@@ -19,9 +19,15 @@ const ASSISTANT_PATHS = {
     gemini: '.gemini',
     antigravity: '.gemini/antigravity',
     copilot: '.github',
+    kiro: '.kiro',
+    codex: '.codex',
+    qoder: '.qoder',
     roocode: '.roocode',
     trae: '.trae',
+    opencode: '.opencode',
     continue: '.continue',
+    codebuddy: '.codebuddy',
+    droid: '.factory',
     all: 'all'
 };
 
