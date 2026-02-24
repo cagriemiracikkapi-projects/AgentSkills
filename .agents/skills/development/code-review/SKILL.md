@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: OWASP Vulnerability Scanner
-node scripts/owasp_scanner.js [options]
+node .agent_scripts/development_code-review/owasp_scanner.js [options]
 
 # Script 2: Complexity & Smells Analyzer
-python scripts/complexity_analyzer.py [options]
+python .agent_scripts/development_code-review/complexity_analyzer.py [options]
 
 # Script 3: Architecture Dependency Mapper
-python scripts/arch_dependency_mapper.py [options]
+python .agent_scripts/development_code-review/arch_dependency_mapper.py [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Performs a lightweight static analysis focusing strictly on the OWASP Top 10 vul
 
 **Usage:**
 ```bash
-node scripts/owasp_scanner.js ./src/controllers/
+node .agent_scripts/development_code-review/owasp_scanner.js ./src/controllers/
 ```
 
 ### 2. Complexity & Smells Analyzer
@@ -51,7 +51,7 @@ Calculates Cyclomatic Complexity to identify "Arrow Code" and God Classes that a
 
 **Usage:**
 ```bash
-python scripts/complexity_analyzer.py --threshold 15 ./src/services/
+python .agent_scripts/development_code-review/complexity_analyzer.py --threshold 15 ./src/services/
 ```
 
 ### 3. Architecture Dependency Mapper
@@ -65,7 +65,7 @@ Scans imports to ensure the application layer isn't tightly coupled to the persi
 
 **Usage:**
 ```bash
-python scripts/arch_dependency_mapper.py ./src/
+python .agent_scripts/development_code-review/arch_dependency_mapper.py ./src/
 ```
 
 ## Reference Documentation
@@ -136,4 +136,4 @@ if (user.balance <= 0) return false;
 
 - Security Guide: `references/security_owasp.md`
 - Clean Code Strategies: `references/clean_code.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_code-review/` directory

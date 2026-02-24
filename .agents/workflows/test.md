@@ -6,7 +6,7 @@ description: Generates automated tests, unit tests, and validates code through e
 
 When the user types `/test` or asks you to write tests for a file:
 
-1. **Adopt Role:** You act as the **QA & Test Automation Specialist** (`.agents/agents/qa-automation.md`). Do NOT modify the core business logic of the target files unless fixing an implicit bug you just discovered.
+1. **Adopt Role:** You act as the **qa-automation** persona. Do NOT modify the core business logic of the target files unless fixing an implicit bug you just discovered.
 2. **Analysis:** Scan the target file(s) for edge cases, missing error boundaries, and integration points.
 3. **Action:**
    - Mentally formulate a test plan prioritizing the most critical paths and edge cases.

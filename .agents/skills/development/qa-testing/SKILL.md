@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: TDD Unit Test Boilerplate Generator
-node scripts/tdd_generator.js [options]
+node .agent_scripts/development_qa-testing/tdd_generator.js [options]
 
 # Script 2: Test Suite Flakiness Analyzer
-node scripts/flakiness_analyzer.js [options]
+node .agent_scripts/development_qa-testing/flakiness_analyzer.js [options]
 
 # Script 3: E2E Page Object Scaffolder
-node scripts/e2e_page_object.js [options]
+node .agent_scripts/development_qa-testing/e2e_page_object.js [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Generates a foundational Jest/Pytest test file based on a class name, automatica
 
 **Usage:**
 ```bash
-node scripts/tdd_generator.js PaymentService --target unit
+node .agent_scripts/development_qa-testing/tdd_generator.js PaymentService --target unit
 ```
 
 ### 2. Flakiness Analyzer
@@ -51,7 +51,7 @@ Parses CI test output logs over the last 10 runs to identify tests that randomly
 
 **Usage:**
 ```bash
-node scripts/flakiness_analyzer.js ./ci-logs/ --format json
+node .agent_scripts/development_qa-testing/flakiness_analyzer.js ./ci-logs/ --format json
 ```
 
 ### 3. E2E Page Object Scaffolder
@@ -65,7 +65,7 @@ Generates Page Object Model (POM) classes for Cypress/Playwright to keep End-to-
 
 **Usage:**
 ```bash
-node scripts/e2e_page_object.js LoginForm --framework cypress
+node .agent_scripts/development_qa-testing/e2e_page_object.js LoginForm --framework cypress
 ```
 
 ## Reference Documentation
@@ -131,4 +131,4 @@ After unit tests cover the logic, use Cypress/Playwright to visually click throu
 
 - TDD Strategy: `references/tdd_and_mocking.md`
 - E2E Patterns: `references/e2e_best_practices.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_qa-testing/` directory

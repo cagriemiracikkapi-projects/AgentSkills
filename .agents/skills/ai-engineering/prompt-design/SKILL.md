@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: Prompt Token Cost Estimator
-python scripts/cost_estimator.py [options]
+python .agent_scripts/ai-engineering_prompt-design/cost_estimator.py [options]
 
 # Script 2: Few-Shot Example Generator
-python scripts/few_shot_generator.py [options]
+python .agent_scripts/ai-engineering_prompt-design/few_shot_generator.py [options]
 
 # Script 3: A/B Test Evaluator
-python scripts/ab_evaluator.py [options]
+python .agent_scripts/ai-engineering_prompt-design/ab_evaluator.py [options]
 ```
 
 ## Core Capabilities
@@ -36,7 +36,7 @@ Calculates the exact token footprint of a specific prompt template against vario
 
 **Usage:**
 ```bash
-python scripts/cost_estimator.py ./prompts/customer_support.txt --model claude-3-5-sonnet
+python .agent_scripts/ai-engineering_prompt-design/cost_estimator.py ./prompts/customer_support.txt --model claude-3-5-sonnet
 ```
 
 ### 2. Few-Shot Generator
@@ -45,7 +45,7 @@ Scans a database of historical user completions and extracts the three most dive
 
 **Usage:**
 ```bash
-python scripts/few_shot_generator.py ./logs/completions.jsonl
+python .agent_scripts/ai-engineering_prompt-design/few_shot_generator.py ./logs/completions.jsonl
 ```
 
 ### 3. A/B Test Evaluator
@@ -54,7 +54,7 @@ Runs two different prompt strings against a dataset of 50 ground-truth examples 
 
 **Usage:**
 ```bash
-python scripts/ab_evaluator.py ./prompts/v1.txt ./prompts/v2.txt --dataset ./evals/set_a.csv
+python .agent_scripts/ai-engineering_prompt-design/ab_evaluator.py ./prompts/v1.txt ./prompts/v2.txt --dataset ./evals/set_a.csv
 ```
 
 ## Reference Documentation

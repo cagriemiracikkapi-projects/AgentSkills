@@ -1,6 +1,7 @@
 {
   "backend": [
     "senior-backend",
+    "database-architect",
     "devops-engineer",
     "qa-automation",
     "code-auditor"
@@ -20,9 +21,16 @@
     "prompt-engineer",
     "code-auditor"
   ],
+  "mobile": [
+    "mobile-developer",
+    "senior-frontend",
+    "qa-automation",
+    "code-auditor"
+  ],
   "web": [
     "senior-backend",
     "senior-frontend",
+    "fullstack-developer",
     "devops-engineer",
     "qa-automation",
     "code-auditor",
@@ -36,6 +44,10 @@
     "code-auditor",
     "game-architect",
     "prompt-engineer",
-    "ui-ux-designer"
+    "ui-ux-designer",
+    "database-architect",
+    "debugger",
+    "fullstack-developer",
+    "mobile-developer"
   ]
 }

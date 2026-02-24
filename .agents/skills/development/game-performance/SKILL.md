@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: GC Allocation Scanner
-python scripts/gc_allocation_scanner.py [options]
+python .agent_scripts/development_game-performance/gc_allocation_scanner.py [options]
 
 # Script 2: Object Pool Scaffolder
-python scripts/object_pool_scaffolder.py [options]
+python .agent_scripts/development_game-performance/object_pool_scaffolder.py [options]
 
 # Script 3: Physics Profiler Analysis
-python scripts/physics_profiler_analyzer.py [options]
+python .agent_scripts/development_game-performance/physics_profiler_analyzer.py [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Parses C# files to identify operations that will generate Garbage Collection in 
 
 **Usage:**
 ```bash
-python scripts/gc_allocation_scanner.py Assets/Scripts/
+python .agent_scripts/development_game-performance/gc_allocation_scanner.py Assets/Scripts/
 ```
 
 ### 2. Object Pool Scaffolder
@@ -51,7 +51,7 @@ Automatically generates optimized Generic Object Pooling boilerplate for frequen
 
 **Usage:**
 ```bash
-python scripts/object_pool_scaffolder.py BulletManager --type Projectile
+python .agent_scripts/development_game-performance/object_pool_scaffolder.py BulletManager --type Projectile
 ```
 
 ### 3. Physics Profiler Analyzer
@@ -65,7 +65,7 @@ Analyzes Unity Physics logic to flag bottlenecks before you open the Profiler wi
 
 **Usage:**
 ```bash
-python scripts/physics_profiler_analyzer.py Assets/Scripts/Physics/
+python .agent_scripts/development_game-performance/physics_profiler_analyzer.py Assets/Scripts/Physics/
 ```
 
 ## Reference Documentation
@@ -97,7 +97,7 @@ Technical reference guide in `references/rendering_and_dots.md`:
 
 ### 1. Identify the Bottleneck
 Before refactoring, check the Unity Profiler. Is the delay orange (Physics), blue (Scripts), or yellow (VSync/Render)?
-- Use `scripts/gc_allocation_scanner.py` to eliminate script-based stutters.
+- Use `.agent_scripts/development_game-performance/gc_allocation_scanner.py` to eliminate script-based stutters.
 
 ### 2. Fix Allocations
 - In C#, allocations block the main thread. Replace `new[]` arrays in `Update` with statically defined class arrays.
@@ -128,4 +128,4 @@ If you have 500+ enemies pathfinding simultaneously, `MonoBehaviour` `Update` lo
 
 - Memory Guide: `references/memory_optimization.md`
 - Rendering & ECS Guide: `references/rendering_and_dots.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_game-performance/` directory

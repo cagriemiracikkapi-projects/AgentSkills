@@ -60,24 +60,26 @@ function buildRemoteConfig({ sourceRepo, sourceBranch } = {}) {
 }
 
 let activeRemoteConfig = buildRemoteConfig();
-const DEFAULT_DOMAIN_MAP = {
-    backend: ['senior-backend', 'devops-engineer', 'qa-automation', 'code-auditor'],
-    frontend: ['senior-frontend', 'ui-ux-designer', 'qa-automation', 'code-auditor'],
-    game: ['game-architect', 'qa-automation', 'code-auditor'],
-    ai: ['prompt-engineer', 'code-auditor'],
-    web: ['senior-backend', 'senior-frontend', 'devops-engineer', 'qa-automation', 'code-auditor', 'ui-ux-designer'],
-    all: [
-        'senior-backend',
-        'senior-frontend',
-        'devops-engineer',
-        'qa-automation',
-        'code-auditor',
-        'game-architect',
-        'prompt-engineer',
-        'ui-ux-designer'
-    ]
-};
-const DEFAULT_WORKFLOW_FILES = ['audit.md', 'commit.md', 'frontend.md', 'manage-roles.md', 'test.md'];
+// Single source of truth: domains.json (loaded at init; hardcoded fallback only if file missing)
+const DEFAULT_DOMAIN_MAP = (() => {
+    const domainFile = path.resolve(__dirname, '../.agents/domains.json');
+    try {
+        return JSON.parse(fs.readFileSync(domainFile, 'utf8'));
+    } catch {
+        return {
+            backend: ['senior-backend', 'devops-engineer', 'qa-automation', 'code-auditor'],
+            frontend: ['senior-frontend', 'ui-ux-designer', 'qa-automation', 'code-auditor'],
+            game: ['game-architect', 'qa-automation', 'code-auditor'],
+            ai: ['prompt-engineer', 'code-auditor'],
+            web: ['senior-backend', 'senior-frontend', 'devops-engineer', 'qa-automation', 'code-auditor', 'ui-ux-designer'],
+            all: [
+                'senior-backend', 'senior-frontend', 'devops-engineer', 'qa-automation',
+                'code-auditor', 'game-architect', 'prompt-engineer', 'ui-ux-designer'
+            ]
+        };
+    }
+})();
+const DEFAULT_WORKFLOW_FILES = ['audit.md', 'backend.md', 'commit.md', 'frontend.md', 'manage-roles.md', 'test.md'];
 const AGENTSKILLS_META_DIR = '.agentskills';
 const AGENTSKILLS_MANIFEST_PATH = path.join(process.cwd(), AGENTSKILLS_META_DIR, 'manifest.json');
 const ASSISTANT_ALIASES = {
@@ -174,8 +176,13 @@ const ASSISTANT_PATHS = Object.keys(ASSISTANT_PROFILES).reduce((acc, key) => {
 }, { all: 'all' });
 
 async function loadESM() {
-    chalk = (await import('chalk')).default;
-    inquirer = (await import('inquirer')).default;
+    try {
+        chalk = (await import('chalk')).default;
+        inquirer = (await import('inquirer')).default;
+    } catch (err) {
+        console.error('Failed to load ESM dependencies (chalk/inquirer). Ensure they are installed: npm install');
+        process.exit(1);
+    }
 }
 
 function ensureDirSync(dirPath) {
@@ -587,18 +594,19 @@ async function gatherSkillFiles(skillPath, useLocal, remoteConfig = activeRemote
             }
         }
     } else {
-        // Fetch from GitHub
-        const refFiles = await listGithubFiles(`skills/${skillPath}/references`, remoteConfig);
-        for (const f of refFiles) {
-            const content = await fetchFileContent(`skills/${skillPath}/references/${f}`, false, remoteConfig);
-            if (content) files.references.push({ name: f, content });
-        }
-        
-        const scriptFiles = await listGithubFiles(`skills/${skillPath}/scripts`, remoteConfig);
-        for (const f of scriptFiles) {
-            const content = await fetchFileContent(`skills/${skillPath}/scripts/${f}`, false, remoteConfig);
-            if (content) files.scripts.push({ name: f, content });
-        }
+        // Fetch from GitHub (parallelized)
+        const [refFiles, scriptFiles] = await Promise.all([
+            listGithubFiles(`skills/${skillPath}/references`, remoteConfig),
+            listGithubFiles(`skills/${skillPath}/scripts`, remoteConfig)
+        ]);
+
+        const [refContents, scriptContents] = await Promise.all([
+            Promise.all(refFiles.map(f => fetchFileContent(`skills/${skillPath}/references/${f}`, false, remoteConfig).then(content => content ? { name: f, content } : null))),
+            Promise.all(scriptFiles.map(f => fetchFileContent(`skills/${skillPath}/scripts/${f}`, false, remoteConfig).then(content => content ? { name: f, content } : null)))
+        ]);
+
+        files.references = refContents.filter(Boolean);
+        files.scripts = scriptContents.filter(Boolean);
     }
     
     return files;
@@ -629,11 +637,10 @@ async function gatherWorkflowFiles(useLocal, remoteConfig = activeRemoteConfig) 
     if (files.length === 0) {
         files = [...DEFAULT_WORKFLOW_FILES];
     }
-    for (const file of files) {
-        const content = await fetchFileContent(`workflows/${file}`, false, remoteConfig);
-        if (content) workflows.push({ name: file, content });
-    }
-    return workflows;
+    const results = await Promise.all(
+        files.map(file => fetchFileContent(`workflows/${file}`, false, remoteConfig).then(content => content ? { name: file, content } : null))
+    );
+    return results.filter(Boolean);
 }
 
 async function installAgent(agentName, assistant, useLocal, remoteConfig = activeRemoteConfig, installState = null) {
@@ -854,6 +861,37 @@ async function run() {
       .name('agentskills')
       .description('CLI to seamlessly install Universal Agent Roles & Skills into your AI assistant.')
       .version(CLI_VERSION);
+
+    program.command('list')
+      .description('List available agents, domains, or supported platforms')
+      .option('--agents', 'List all available agents')
+      .option('--domains', 'List all available domains and their agents')
+      .option('--platforms', 'List all supported AI platforms')
+      .option('--local', 'Use local files instead of downloading from GitHub')
+      .action(async (options) => {
+          if (options.platforms) {
+              console.log(chalk.bold('\nSupported AI Platforms:'));
+              for (const [name, profile] of Object.entries(ASSISTANT_PROFILES)) {
+                  console.log(`  ${chalk.green(name.padEnd(16))} ${chalk.gray(profile.targetDir)} (${profile.mode})`);
+              }
+              console.log('');
+          } else if (options.domains) {
+              const domains = options.local ? loadLocalDomains() : DEFAULT_DOMAIN_MAP;
+              console.log(chalk.bold('\nAvailable Domains:'));
+              for (const [domain, agents] of Object.entries(domains)) {
+                  console.log(`  ${chalk.green(domain.padEnd(12))} ${chalk.gray(agents.join(', '))}`);
+              }
+              console.log('');
+          } else {
+              // Default: list agents
+              const agents = options.local ? getLocalAgentNames() : Object.keys(DEFAULT_DOMAIN_MAP).includes('all') ? DEFAULT_DOMAIN_MAP.all : getLocalAgentNames();
+              console.log(chalk.bold('\nAvailable Agents:'));
+              for (const agent of agents) {
+                  console.log(`  ${chalk.green(agent)}`);
+              }
+              console.log('');
+          }
+      });
 
     program.command('init')
       .description('Initialize AgentSkills by persona (--agent) or bundle (--domain) for a specific AI assistant')

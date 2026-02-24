@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: Design Token Generator
-node scripts/token_generator.js [options]
+node .agent_scripts/creative-design_ui-design-system/token_generator.js [options]
 
 # Script 2: Component Scaffolder
-node scripts/component_scaffolder.js [options]
+node .agent_scripts/creative-design_ui-design-system/component_scaffolder.js [options]
 
 # Script 3: Accessibility (a11y) Linter
-node scripts/a11y_linter.js [options]
+node .agent_scripts/creative-design_ui-design-system/a11y_linter.js [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Converts raw color codes and font sizes into a standardized CSS Custom Propertie
 
 **Usage:**
 ```bash
-node scripts/token_generator.js --brand-color #3B82F6 --output tokens.css
+node .agent_scripts/creative-design_ui-design-system/token_generator.js --brand-color #3B82F6 --output tokens.css
 ```
 
 ### 2. Component Scaffolder
@@ -51,7 +51,7 @@ Automated tool to generate a new UI building block (Button, Card, Modal) complet
 
 **Usage:**
 ```bash
-node scripts/component_scaffolder.js Button --framework react --style tailwind
+node .agent_scripts/creative-design_ui-design-system/component_scaffolder.js Button --framework react --style tailwind
 ```
 
 ### 3. Accessibility Linter
@@ -65,7 +65,7 @@ Scans component source code for common WCAG violations before they reach the bro
 
 **Usage:**
 ```bash
-node scripts/a11y_linter.js ./src/components/
+node .agent_scripts/creative-design_ui-design-system/a11y_linter.js ./src/components/
 ```
 
 ## Reference Documentation
@@ -97,14 +97,14 @@ Technical reference guide in `references/interaction_and_a11y.md`:
 
 ### 1. Define Tokens
 Never hardcode a pixel value or a hex color in a component.
-- Run `scripts/token_generator.js` to establish your base `--color-primary-500` and `--spacing-4`.
+- Run `.agent_scripts/creative-design_ui-design-system/token_generator.js` to establish your base `--color-primary-500` and `--spacing-4`.
 
 ### 2. Build Atoms
-Use `scripts/component_scaffolder.js` to create the simplest elements first: `Button`, `Input`, `Typography`.
+Use `.agent_scripts/creative-design_ui-design-system/component_scaffolder.js` to create the simplest elements first: `Button`, `Input`, `Typography`.
 
 ### 3. Compose and Validate
 Combine Atoms into Molecules (e.g., a `SearchForm`).
-- Run `scripts/a11y_linter.js` to ensure the new SearchForm can be read by a screen reader.
+- Run `.agent_scripts/creative-design_ui-design-system/a11y_linter.js` to ensure the new SearchForm can be read by a screen reader.
 
 ## Best Practices Summary
 
@@ -126,4 +126,4 @@ Combine Atoms into Molecules (e.g., a `SearchForm`).
 
 - Design Foundations: `references/design_foundations.md`
 - Accessibility Guidelines: `references/interaction_and_a11y.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/creative-design_ui-design-system/` directory

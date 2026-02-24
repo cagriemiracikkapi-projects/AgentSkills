@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: Bundle Size Analyzer
-node scripts/bundle_analyzer.js [options]
+node .agent_scripts/development_frontend-performance/bundle_analyzer.js [options]
 
 # Script 2: Unused CSS/JS Purger
-node scripts/asset_purger.js [options]
+node .agent_scripts/development_frontend-performance/asset_purger.js [options]
 
 # Script 3: React Re-render Profiler
-node scripts/react_profiler_parser.js [options]
+node .agent_scripts/development_frontend-performance/react_profiler_parser.js [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Automates the scanning of webpack/vite build outputs to identify massive depende
 
 **Usage:**
 ```bash
-node scripts/bundle_analyzer.js ./dist/stats.json
+node .agent_scripts/development_frontend-performance/bundle_analyzer.js ./dist/stats.json
 ```
 
 ### 2. Asset Purger
@@ -51,7 +51,7 @@ Scans HTML and JSX files to find and remove CSS classes or unused exported Javas
 
 **Usage:**
 ```bash
-node scripts/asset_purger.js ./src/ --build-dir ./dist/
+node .agent_scripts/development_frontend-performance/asset_purger.js ./src/ --build-dir ./dist/
 ```
 
 ### 3. React Profiler Parser
@@ -65,7 +65,7 @@ Parses the JSON output from the React DevTools Profiler to mathematically identi
 
 **Usage:**
 ```bash
-node scripts/react_profiler_parser.js profile_trace.json
+node .agent_scripts/development_frontend-performance/react_profiler_parser.js profile_trace.json
 ```
 
 ## Reference Documentation
@@ -106,4 +106,4 @@ Technical reference guide in `references/rendering_optimization.md`:
 
 - Web Vitals Guide: `references/core_web_vitals.md`
 - Rendering Guide: `references/rendering_optimization.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_frontend-performance/` directory

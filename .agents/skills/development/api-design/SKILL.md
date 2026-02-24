@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: API Route Scaffolder
-python scripts/api_route_scaffolder.py [options]
+python .agent_scripts/development_api-design/api_route_scaffolder.py [options]
 
 # Script 2: OpenAPI/Swagger Generator
-python scripts/openapi_generator.py [options]
+python .agent_scripts/development_api-design/openapi_generator.py [options]
 
 # Script 3: Endpoint Load Tester
-python scripts/endpoint_load_tester.py [options]
+python .agent_scripts/development_api-design/endpoint_load_tester.py [options]
 ```
 
 ## Core Capabilities
@@ -38,7 +38,7 @@ Automated tool for generating boilerplate controllers, services, and routing def
 
 **Usage:**
 ```bash
-python scripts/api_route_scaffolder.py <route-name> --method [GET|POST|PUT|DELETE]
+python .agent_scripts/development_api-design/api_route_scaffolder.py <route-name> --method [GET|POST|PUT|DELETE]
 ```
 
 ### 2. OpenAPI Generator
@@ -52,7 +52,7 @@ Scans existing controllers and comments to automatically build or update `swagge
 
 **Usage:**
 ```bash
-python scripts/openapi_generator.py <src-folder> --output swagger.json
+python .agent_scripts/development_api-design/openapi_generator.py <src-folder> --output swagger.json
 ```
 
 ### 3. Endpoint Load Tester
@@ -66,7 +66,7 @@ A lightweight wrapper around `k6` or `autocannon` to quickly stress-test specifi
 
 **Usage:**
 ```bash
-python scripts/endpoint_load_tester.py <endpoint-url> --users 100 --duration 60s
+python .agent_scripts/development_api-design/endpoint_load_tester.py <endpoint-url> --users 100 --duration 60s
 ```
 
 ## Reference Documentation
@@ -106,7 +106,7 @@ Never write code before the contract is agreed upon.
 ### 2. Scaffold and Implement
 ```bash
 # Generate the boilerplate
-python scripts/api_route_scaffolder.py users --method POST
+python .agent_scripts/development_api-design/api_route_scaffolder.py users --method POST
 
 # Implement the business logic following references/architecture_standards.md
 ```
@@ -114,7 +114,7 @@ python scripts/api_route_scaffolder.py users --method POST
 ### 3. Load Testing & Hardening
 ```bash
 # Verify the endpoint can handle production traffic
-python scripts/endpoint_load_tester.py http://localhost:3000/api/v1/users --users 50
+python .agent_scripts/development_api-design/endpoint_load_tester.py http://localhost:3000/api/v1/users --users 50
 ```
 
 ## Best Practices Summary
@@ -140,4 +140,4 @@ python scripts/endpoint_load_tester.py http://localhost:3000/api/v1/users --user
 
 - Architecture Guidance: `references/architecture_standards.md`
 - Security Guidelines: `references/security_guidelines.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_api-design/` directory

@@ -15,13 +15,13 @@ This skill provides three core capabilities through automated scripts:
 
 ```bash
 # Script 1: Slow Query Analyzer
-python scripts/slow_query_analyzer.py [options]
+python .agent_scripts/development_database-optimization/slow_query_analyzer.py [options]
 
 # Script 2: Index Recommender
-python scripts/index_recommender.py [options]
+python .agent_scripts/development_database-optimization/index_recommender.py [options]
 
 # Script 3: Schema Migration Validator
-python scripts/migration_validator.py [options]
+python .agent_scripts/development_database-optimization/migration_validator.py [options]
 ```
 
 ## Core Capabilities
@@ -37,7 +37,7 @@ Automated tool to parse database logs (e.g., pg_stat_statements) or ORM logs and
 
 **Usage:**
 ```bash
-python scripts/slow_query_analyzer.py --log-file pg_slow.log --threshold 500ms
+python .agent_scripts/development_database-optimization/slow_query_analyzer.py --log-file pg_slow.log --threshold 500ms
 ```
 
 ### 2. Index Recommender
@@ -51,7 +51,7 @@ Analyzes a specific table schema and a provided complex query, then recommends t
 
 **Usage:**
 ```bash
-python scripts/index_recommender.py --table users --query "SELECT * FROM users WHERE status='active' AND created_at > '2023-01-01' ORDER BY last_login DESC"
+python .agent_scripts/development_database-optimization/index_recommender.py --table users --query "SELECT * FROM users WHERE status='active' AND created_at > '2023-01-01' ORDER BY last_login DESC"
 ```
 
 ### 3. Schema Migration Validator
@@ -65,7 +65,7 @@ Lints migration files (e.g., Prisma, Flyway, Alembic) before they run in product
 
 **Usage:**
 ```bash
-python scripts/migration_validator.py ./migrations/
+python .agent_scripts/development_database-optimization/migration_validator.py ./migrations/
 ```
 
 ## Reference Documentation
@@ -100,15 +100,15 @@ Technical reference guide in `references/scalability_patterns.md`:
 ### 1. Diagnosis
 Never guess what is slow. Measure it.
 - Run `EXPLAIN ANALYZE` on the suspected query.
-- Use `scripts/slow_query_analyzer.py` to find the mathematical bottleneck.
+- Use `.agent_scripts/development_database-optimization/slow_query_analyzer.py` to find the mathematical bottleneck.
 
 ### 2. Resolution
-- Add indexes via `scripts/index_recommender.py`.
+- Add indexes via `.agent_scripts/development_database-optimization/index_recommender.py`.
 - If an index isn't enough, refactor the application layer to use Redis Caching or DataLoaders.
 
 ### 3. Safe Deployment
 - Write the migration script.
-- Run `scripts/migration_validator.py` to ensure applying the index won't lock the `users` table for 10 minutes during peak hours.
+- Run `.agent_scripts/development_database-optimization/migration_validator.py` to ensure applying the index won't lock the `users` table for 10 minutes during peak hours.
 
 ## Best Practices Summary
 
@@ -130,4 +130,4 @@ Never guess what is slow. Measure it.
 
 - Query Optimization: `references/query_optimization.md`
 - Scalability Patterns: `references/scalability_patterns.md`
-- Utilities: `scripts/` directory
+- Utilities: `.agent_scripts/development_database-optimization/` directory
