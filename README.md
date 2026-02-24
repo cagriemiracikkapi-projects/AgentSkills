@@ -1,6 +1,12 @@
-# AgentSkills
+# AgentSkills, çeşitli yapay zeka kodlama asistanları (Cursor, Copilot, Claude, Gemini, Windsurf vb.) için **evrensel ve modüler bir "Agent-Skill" takım çantası** kuran bir projedir.
 
-Bu depo, Codex, Claude ve Gemini gibi yapay zeka asistanları için optimize edilmiş, genel kurallarını ve özel yeteneklerini (skills) içerir. Asistanın projelere entegrasyonu, verimli çalışması (minimum token/minimum süre), özel çıktılar vermesi ve Git Commit mesajlarının otomatikleştirilmesine yönelik direktifleri sağlamaktır.
+Bu proje sayesinde AI asistanlarınızı sıradan kod botları olmaktan çıkarıp:
+- **Tasarım Sistemi Mimarisi** (*Frontend Performance, UI/UX*),
+- **Sistem Mimarisi** (*Veritabanı optimizasyonu, API Scaffolding*),
+- **Performans Uzmanı** (*Unity ECS, DOTS, C# Bellek Yönetimi*),
+- **Kalite Güvence ve Güvenlik Sorumlusu** gibi "Personalar" haline getirebilirsiniz.
+
+> **YENİ NESİL MİMARİ:** AgentSkills V2 ile birlikte sistem `agents/` (Personalar) ve `skills/` (Yetenek setleri, scriptler ve referanslar) olarak ikiye ayrılmıştır. Örneğin, Cursor'a `senior-backend` kurduğunuzda, sistem sadece o persona'yı değil; onun bağımlı olduğu API Design ve Code Review gibi becerileri de otomatik olarak çözümleyip kurar!
 
 ## Başlıca Özellikler
 
@@ -9,54 +15,35 @@ Bu depo, Codex, Claude ve Gemini gibi yapay zeka asistanları için optimize edi
 3. **Takım Mimarisi (Roller & İş Akışları):** Frontend, Backend, DevOps, Veritabanı gibi spesifik rollere ayrılmış ajan yetenekleri ve `/audit`, `/commit` gibi tetikleyici iş akışları (workflows).
 4. **Özelleştirilmiş Commit Mesajları:** "Commitle" dendiğinde projeyi analiz edip yalnızca `feat(subject): ***` gibi formatlarla, duruma özgü Git mesajı üreten bir özellik.
 
-## Kurulum ve Entegrasyon
-Bu yapıyı ("Müşterek Kurallar", "Roller" ve "İş Akışları") herhangi bir projenize hızlıca indirmek için aşağıdaki betikleri kullanabilirsiniz:
+## Kurulum (CLI Kullanımı)
 
-### 🚀 Hızlı Kurulum (Yeni CLI)
-
-Artık ajanları kendi yapay zeka asistanınıza (Cursor, Copilot, Claude vb.) tek bir komutla, o asistana en uygun formatta kurabilirsiniz!
+Sistemi projenize kurmanın en modüler yolu Node.js tabanlı Merkezi Paket Yöneticisi CLI aracımızdır.
 
 ```bash
-# 1. CLI aracını global olarak kurun
+# Aracı global olarak kurun
 npm install -g agentskills-cli
 
-# 2. Projenizin dizinine gidin
-cd /sizin/projeniz
+# İstediğiniz hedef yapay zekaya (Örn: Cursor) bağımlı bir ajan paketini kurun:
+agentskills init --agent senior-backend --ai cursor
 
-# 3. Kullandığınız yapay zeka aracına göre ajanları başlatın:
-agentskills init --ai cursor      # Cursor (.cursor/rules/ içine kurar)
-agentskills init --ai copilot     # GitHub Copilot (.github/copilot-instructions.md oluşturur)
-agentskills init --ai claude      # Claude Code (.claude/skills/ içine kurar)
-agentskills init --ai windsurf    # Windsurf (.windsurf/rules/ içine kurar)
-agentskills init --ai gemini      # Gemini CLI (.gemini/ dizinine kurar)
-agentskills init --ai codex       # Codex (.codex/ dizinine kurar)
-agentskills init --ai qoder       # Qoder (.qoder/ dizinine kurar)
-agentskills init --ai kiro        # Kiro (.kiro/ dizinine kurar)
-agentskills init --ai roocode     # Roo Code (.roocode/ dizinine kurar)
-agentskills init --ai trae        # Trae (.trae/ dizinine kurar)
-agentskills init --ai opencode    # OpenCode (.opencode/ dizinine kurar)
-agentskills init --ai continue    # Continue (.continue/ dizinine kurar)
-agentskills init --ai codebuddy   # Codebuddy (.codebuddy/ dizinine kurar)
-agentskills init --ai droid       # Droid (.factory/ dizinine kurar)
-agentskills init --ai all         # En popüler asistanlara aynı anda kurar
+# Veya interaktif sihirbazı başlatın:
+agentskills init --agent game-architect
 ```
 
-### 🎯 Alana Özel (Domain-Specific) Kurulum
-Projenizin türüne göre sadece o alandaki yetenekleri (token israfını engellemek için) indirebilirsiniz. `--domain` parametresini kullanın:
+### Desteklenen Asistanlar (`--ai` Parametresi)
+Sistem yazdığınız komuta göre içeriği formatlar:
+- `--ai cursor` veya `windsurf`: Agent ve becerileri (skill/references) harmanlayıp hızlı okunabilir bir `.mdc` dosyası oluşturur.  
+- `--ai copilot` veya `codebuddy`: Sınırlı çoklu-dosya özellikleri yüzünden tüm ajan/yetenek yapısını devasa tek bir `.md` bağlam paketine birleştirir (`copilot-instructions.md`).
+- `--ai claude` veya `antigravity`: Orijinal `/agents` ve `/skills` klasör ve script yapısını olduğu gibi kopyalar.
 
-```bash
-# Sadece Game Development (Unity, C#, Performance) rollerini indirir
-agentskills init --ai cursor --domain game
-
-# Sadece Mobile App (React Native, Flutter, Swift) rollerini indirir
-agentskills init --ai copilot --domain mobile
-
-# Sadece Web Development (Frontend, Backend) rollerini indirir
-agentskills init --ai claude --domain web
-
-# Tüm rolleri indirir (Varsayılan)
-agentskills init --ai windsurf --domain all
-```
+### Mevcut Personalar (`--agent` Parametresi)
+Aşağıdaki ajanlardan projenize en uygun olanı seçin:
+- `senior-backend`: API tasarımı, DB Optimizasyon, Güvenlik.
+- `senior-frontend`: UI Design Systems, Bundle Analyzer, 60fps Performans.
+- `game-architect`: Unity C#, Object Pooling, DOTS/ECS Performans.
+- `qa-automation`: Edge-Case Testleri, TDD, Integration Test uzmanı.
+- `devops-engineer`: CI/CD, AWS/Docker otomasyonları.
+- `code-auditor`: OWASP Top 10, Code Smells analisti (Salt-Okunur).
 
 *(Eski yöntem olan `install.sh` ve `install.ps1` scriptleri depo içerisinde `scripts/` klasöründe yedek olarak tutulmaktadır.)*
 
