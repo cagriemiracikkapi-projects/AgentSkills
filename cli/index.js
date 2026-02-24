@@ -4,7 +4,6 @@ const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { execSync } = require('child_process');
 
 let chalk;
 let inquirer;
@@ -31,19 +30,30 @@ const ASSISTANT_PATHS = {
     all: 'all'
 };
 
-const FILES_TO_SYNC = [
-    'global-rules.md',
-    'roles/auditor.md',
-    'roles/frontend.md',
-    'roles/backend.md',
-    'roles/devops.md',
-    'roles/database.md',
-    'workflows/audit.md',
-    'workflows/frontend.md',
-    'workflows/backend.md',
-    'workflows/commit.md',
-    'workflows/manage-roles.md'
-];
+const DOMAIN_FILES = {
+    web: [
+        'roles/frontend.md',
+        'roles/web-backend.md',
+        'workflows/frontend.md'
+    ],
+    game: [
+        'roles/game-unity.md'
+    ],
+    mobile: [
+        'roles/mobile-app.md'
+    ],
+    common: [
+        'global-rules.md',
+        'roles/auditor.md',
+        'roles/qa-tester.md',
+        'roles/devops.md',
+        'roles/database.md',
+        'workflows/audit.md',
+        'workflows/test.md',
+        'workflows/commit.md',
+        'workflows/manage-roles.md'
+    ]
+};
 
 async function loadESM() {
     chalk = (await import('chalk')).default;
@@ -76,7 +86,7 @@ async function fetchFileContent(filePath, useLocal) {
     });
 }
 
-async function installForAssistant(assistant, useLocal) {
+async function installForAssistant(assistant, domain, useLocal) {
     const targetDir = ASSISTANT_PATHS[assistant];
     
     if (!targetDir) {
@@ -84,8 +94,20 @@ async function installForAssistant(assistant, useLocal) {
         process.exit(1);
     }
 
+    let filesToSync = [...DOMAIN_FILES.common];
+    if (domain && DOMAIN_FILES[domain]) {
+        filesToSync = filesToSync.concat(DOMAIN_FILES[domain]);
+    } else if (!domain || domain === 'all') {
+        filesToSync = filesToSync.concat(DOMAIN_FILES.web, DOMAIN_FILES.game, DOMAIN_FILES.mobile);
+    } else {
+        console.warn(chalk.yellow(`⚠️ Unknown domain '${domain}'. Defaulting to common files.`));
+    }
+
     const fullTargetDir = path.join(process.cwd(), targetDir);
     console.log(chalk.blue(`\n🚀 Initializing AgentSkills for ${chalk.bold(assistant)}...`));
+    if (domain && domain !== 'all') {
+        console.log(chalk.magenta(`🎯 Domain Context: ${chalk.bold(domain)}`));
+    }
     console.log(chalk.gray(`📂 Target directory: ${fullTargetDir}\n`));
 
     ensureDirSync(fullTargetDir);
@@ -96,7 +118,7 @@ async function installForAssistant(assistant, useLocal) {
     if (assistant === 'copilot') {
         let consolidatedContent = "# AgentSkills System Rules\n\n";
         
-        for (const file of FILES_TO_SYNC) {
+        for (const file of filesToSync) {
            try{
              const content = await fetchFileContent(file, useLocal);
              consolidatedContent += `\n\n## Source: ${file}\n\n${content}`;
@@ -113,7 +135,7 @@ async function installForAssistant(assistant, useLocal) {
         // Cursor and windsurf prefer flat files in their rules directories
         const isFlat = assistant === 'cursor' || assistant === 'windsurf';
 
-        for (const file of FILES_TO_SYNC) {
+        for (const file of filesToSync) {
             let destFileName = file;
             
             if (isFlat) {
@@ -152,9 +174,11 @@ async function run() {
     program.command('init')
       .description('Initialize AgentSkills for a specific AI assistant')
       .option('-a, --ai <platform>', `Specify the AI assistant (${Object.keys(ASSISTANT_PATHS).join(', ')})`)
+      .option('-d, --domain <type>', 'Specify the domain context: web, game, mobile, all')
       .option('--local', 'Use local files instead of downloading from GitHub (for development)')
       .action(async (options) => {
           let assistant = options.ai;
+          let domain = options.domain ? options.domain.toLowerCase() : 'all';
 
           if (!assistant) {
              const answer = await inquirer.prompt([{
@@ -171,10 +195,10 @@ async function run() {
           if (assistant === 'all') {
               const common = ['cursor', 'claude', 'copilot'];
               for(const a of common) {
-                  await installForAssistant(a, options.local);
+                  await installForAssistant(a, domain, options.local);
               }
           } else {
-              await installForAssistant(assistant, options.local);
+              await installForAssistant(assistant, domain, options.local);
           }
       });
 

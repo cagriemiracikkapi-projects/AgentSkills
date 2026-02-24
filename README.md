@@ -41,11 +41,31 @@ agentskills init --ai droid       # Droid (.factory/ dizinine kurar)
 agentskills init --ai all         # En popüler asistanlara aynı anda kurar
 ```
 
+### 🎯 Alana Özel (Domain-Specific) Kurulum
+Projenizin türüne göre sadece o alandaki yetenekleri (token israfını engellemek için) indirebilirsiniz. `--domain` parametresini kullanın:
+
+```bash
+# Sadece Game Development (Unity, C#, Performance) rollerini indirir
+agentskills init --ai cursor --domain game
+
+# Sadece Mobile App (React Native, Flutter, Swift) rollerini indirir
+agentskills init --ai copilot --domain mobile
+
+# Sadece Web Development (Frontend, Backend) rollerini indirir
+agentskills init --ai claude --domain web
+
+# Tüm rolleri indirir (Varsayılan)
+agentskills init --ai windsurf --domain all
+```
+
 *(Eski yöntem olan `install.sh` ve `install.ps1` scriptleri depo içerisinde `scripts/` klasöründe yedek olarak tutulmaktadır.)*
 
 **Not:** Bu dosyayı GitHub'a pushlamadan önce `YOUR_GITHUB_USERNAME` yazılarını kendi GitHub kullanıcı adınızla değiştirmeyi unutmayın.
 
-### 1. Dinamik Rol Optimizasyonu (`/manage-roles`)
+### 1. QA ve Test Otomasyonu (`/test`)
+Yeni eklenen `qa-tester.md` rolü ve `/test` iş akışıyla kodlarınıza Edge-case, Unit test ve entegrasyon testleri (TDD mantığıyla) yazdırabilirsiniz. Sadece dosyayı işaretleyip `/test` yazmanız yeterlidir.
+
+### 2. Dinamik Rol Optimizasyonu (`/manage-roles`)
 Projelerinizde kullanmadığınız ajanların (örn. Backend projesinde Frontend rolü) token tüketmesini engellemek için tasarlanmıştır. IDE üzerinden çağrıldığında projenizin `package.json` gibi dosyalarını analiz eder ve gereksiz rolleri devre dışı bırakır.
 
 ### 2. Ajanlar Arası Oturum Aktarımı (`cli-continues`)
