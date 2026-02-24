@@ -4,7 +4,9 @@ const {
     parseFrontmatter,
     resolveAssistants,
     resolveAgentsForDomain,
-    loadLocalDomains
+    loadLocalDomains,
+    normalizeOwnerRepo,
+    buildRemoteConfig
 } = require('../index.js');
 
 async function run() {
@@ -34,6 +36,17 @@ async function run() {
     const gameAgents = await resolveAgentsForDomain('game', true);
     assert.ok(Array.isArray(gameAgents));
     assert.ok(gameAgents.includes('game-architect'));
+
+    assert.equal(normalizeOwnerRepo('https://github.com/cagriemiracikkapi-projects/AgentSkills.git'), 'cagriemiracikkapi-projects/AgentSkills');
+    assert.equal(normalizeOwnerRepo('git@github.com:cagriemiracikkapi-projects/AgentSkills.git'), 'cagriemiracikkapi-projects/AgentSkills');
+    assert.equal(normalizeOwnerRepo('cagriemiracikkapi-projects/AgentSkills'), 'cagriemiracikkapi-projects/AgentSkills');
+
+    const remoteConfig = buildRemoteConfig({
+        sourceRepo: 'cagriemiracikkapi-projects/AgentSkills',
+        sourceBranch: 'main'
+    });
+    assert.equal(remoteConfig.ownerRepo, 'cagriemiracikkapi-projects/AgentSkills');
+    assert.equal(remoteConfig.branch, 'main');
 
     console.log('All tests passed.');
 }

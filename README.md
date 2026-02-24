@@ -24,7 +24,7 @@ Bu yapı ile asistanı tek bir genel bot yerine, görev bazlı uzman rollere dö
 ## Hızlı Başlangıç (2 Dakika)
 ```bash
 # 1) CLI kur
-npm install -g agentskills-cli
+npm install -g @cagriemiracikkapi-projects/agentskills-cli
 
 # 2) Tek bir agent kur
 agentskills init --agent senior-backend --ai cursor
@@ -39,6 +39,26 @@ agentskills init
 Notlar:
 - `--agent` ve `--domain` aynı komutta birlikte kullanılmaz.
 - `--ai all` kısa yolu sadece `cursor`, `claude`, `copilot` için kurulum yapar.
+
+## Kurulum Kanalları
+
+### 1) NPM (önerilen)
+```bash
+npm install -g @cagriemiracikkapi-projects/agentskills-cli
+```
+
+### 2) GitHub fallback (NPM yoksa)
+```bash
+npm install -g git+https://github.com/cagriemiracikkapi-projects/AgentSkills.git#main:cli
+```
+
+### 3) Local fallback (en garanti yol)
+```bash
+git clone https://github.com/cagriemiracikkapi-projects/AgentSkills.git
+cd AgentSkills/cli
+npm install
+npm link
+```
 
 ```mermaid
 flowchart LR
@@ -67,12 +87,22 @@ flowchart LR
 | Domain kurulumu | `agentskills init --domain backend --ai codex` | Domain’e bağlı tüm agent’leri kurar |
 | Interaktif kurulum | `agentskills init` | Agent/domain ve AI seçimini sorar |
 | Yerelden test | `agentskills init --agent code-auditor --ai cursor --local` | `.agents/` içeriğinden kurar |
+| Kaynak repo override | `agentskills init --agent senior-backend --ai cursor --source-repo cagriemiracikkapi-projects/AgentSkills --source-branch main` | Remote içerik kaynağını manuel belirler |
 
 Parametreler:
 - `--agent <name>`: Tek persona.
 - `--domain <name>`: Çoklu persona paketi.
 - `--ai <platform>`: Hedef platform.
 - `--local`: Remote yerine yerel `.agents` kaynağı.
+- `--source-repo <owner/repo>`: Remote `.agents` kaynağını override eder.
+- `--source-branch <branch>`: Remote kaynak branch’ini override eder.
+
+Env alternatifleri:
+```bash
+# Windows (PowerShell)
+$env:AGENTSKILLS_REPO="cagriemiracikkapi-projects/AgentSkills"
+$env:AGENTSKILLS_BRANCH="main"
+```
 
 ## AI Platform Matrisi
 
@@ -206,15 +236,21 @@ sequenceDiagram
 - Neden: Aynı komutta ikisi birlikte desteklenmez.
 - Çözüm: Sadece birini kullanın.
 
-2. `Unsupported AI assistant`
+2. `npm ERR! 404 ... agentskills-cli`
+- Neden: Eski paket adı (`agentskills-cli`) npm üzerinde yok.
+- Çözüm: Scoped paket kullanın:
+  - `npm install -g @cagriemiracikkapi-projects/agentskills-cli`
+  - veya GitHub fallback komutunu çalıştırın.
+
+3. `Unsupported AI assistant`
 - Neden: `--ai` değeri desteklenmiyor.
 - Çözüm: `agentskills init --help` ile geçerli listeyi kullanın.
 
-3. Bazı dosyalar oluşmadı
+4. Bazı dosyalar oluşmadı
 - Neden: Yanlış dizinde komut çalıştırılmış olabilir.
 - Çözüm: Proje kökünde tekrar çalıştırın ve hedef klasörü kontrol edin (`.cursor`, `.claude`, `.github` vb.).
 
-4. Workflow çalışmıyor
+5. Workflow çalışmıyor
 - Neden: Agent kurulmamış veya yanlış platform klasörüne kurulmuş olabilir.
 - Çözüm: İlgili agent’i doğru `--ai` hedefiyle yeniden kurun.
 

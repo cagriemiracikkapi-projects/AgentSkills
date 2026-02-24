@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://raw.githubusercontent.com/AgentSkills/AgentSkills/main"
+REPO_URL="https://raw.githubusercontent.com/cagriemiracikkapi-projects/AgentSkills/main"
 TARGET_DIR=".agents"
 
 download_required() {

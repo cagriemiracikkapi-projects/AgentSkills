@@ -4,13 +4,62 @@ const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { version: CLI_VERSION } = require('./package.json');
+const packageJson = require('./package.json');
+const CLI_VERSION = packageJson.version;
 
 let chalk;
 let inquirer;
 
-const REPO_URL = 'https://raw.githubusercontent.com/AgentSkills/AgentSkills/main/.agents';
 const LOCAL_DEV_PATH = path.resolve(__dirname, '../.agents');
+const FALLBACK_SOURCE_REPO = 'cagriemiracikkapi-projects/AgentSkills';
+const DEFAULT_REPO_BRANCH = 'main';
+
+function normalizeOwnerRepo(value) {
+    if (!value || typeof value !== 'string') return null;
+    let candidate = value.trim();
+    if (!candidate) return null;
+
+    candidate = candidate.replace(/^git\+/, '');
+    candidate = candidate.replace(/^https?:\/\/github\.com\//i, '');
+    candidate = candidate.replace(/^git@github\.com:/i, '');
+    candidate = candidate.replace(/\.git$/i, '');
+    candidate = candidate.replace(/^\/+|\/+$/g, '');
+
+    const parts = candidate.split('/');
+    if (parts.length >= 2 && parts[0] && parts[1]) {
+        return `${parts[0]}/${parts[1]}`;
+    }
+    return null;
+}
+
+function extractOwnerRepoFromPackage() {
+    const repository = packageJson.repository;
+    if (!repository) return null;
+    if (typeof repository === 'string') return normalizeOwnerRepo(repository);
+    if (typeof repository === 'object' && repository.url) {
+        return normalizeOwnerRepo(repository.url);
+    }
+    return null;
+}
+
+const DEFAULT_SOURCE_REPO = extractOwnerRepoFromPackage() || FALLBACK_SOURCE_REPO;
+
+function buildRemoteConfig({ sourceRepo, sourceBranch } = {}) {
+    const ownerRepo = normalizeOwnerRepo(sourceRepo || process.env.AGENTSKILLS_REPO || DEFAULT_SOURCE_REPO);
+    if (!ownerRepo) {
+        throw new Error('Invalid source repository. Use format owner/repo via --source-repo or AGENTSKILLS_REPO.');
+    }
+
+    const branch = (sourceBranch || process.env.AGENTSKILLS_BRANCH || DEFAULT_REPO_BRANCH).trim();
+    return {
+        ownerRepo,
+        branch,
+        rawBaseUrl: `https://raw.githubusercontent.com/${ownerRepo}/${branch}/.agents`,
+        apiBaseUrl: `https://api.github.com/repos/${ownerRepo}/contents/.agents`
+    };
+}
+
+let activeRemoteConfig = buildRemoteConfig();
 const DEFAULT_DOMAIN_MAP = {
     backend: ['senior-backend', 'devops-engineer', 'qa-automation', 'code-auditor'],
     frontend: ['senior-frontend', 'ui-ux-designer', 'qa-automation', 'code-auditor'],
@@ -58,7 +107,7 @@ function ensureDirSync(dirPath) {
     }
 }
 
-async function fetchFileContent(filePath, useLocal) {
+async function fetchFileContent(filePath, useLocal, remoteConfig = activeRemoteConfig) {
     if (useLocal) {
         const fullLocalPath = path.join(LOCAL_DEV_PATH, filePath);
         if (fs.existsSync(fullLocalPath)) {
@@ -67,12 +116,17 @@ async function fetchFileContent(filePath, useLocal) {
         return null; // Return null if file doesn't exist
     }
 
-    const url = `${REPO_URL}/${filePath}`;
+    const url = `${remoteConfig.rawBaseUrl}/${filePath}`;
     return new Promise((resolve, reject) => {
         let data = '';
         https.get(url, (res) => {
             if (res.statusCode === 404) return resolve(null);
-            if (res.statusCode !== 200) reject(new Error(`Failed ${url}: ${res.statusCode}`));
+            if (res.statusCode !== 200) {
+                reject(new Error(
+                    `Failed ${url}: ${res.statusCode}. Verify source repo (${remoteConfig.ownerRepo}) and branch (${remoteConfig.branch}).`
+                ));
+                return;
+            }
             res.on('data', chunk => data += chunk);
             res.on('end', () => resolve(data));
         }).on('error', reject);
@@ -112,8 +166,8 @@ function parseFrontmatter(content) {
 }
 
 // Minimal GitHub API abstraction to list files in a directory
-async function listGithubFiles(repoPath) {
-    const url = `https://api.github.com/repos/AgentSkills/AgentSkills/contents/.agents/${repoPath}`;
+async function listGithubFiles(repoPath, remoteConfig = activeRemoteConfig) {
+    const url = `${remoteConfig.apiBaseUrl}/${repoPath}?ref=${encodeURIComponent(remoteConfig.branch)}`;
     return new Promise((resolve) => {
         https.get(url, { headers: { 'User-Agent': 'AgentSkills-CLI' } }, (res) => {
             let data = '';
@@ -153,8 +207,8 @@ function loadLocalDomains() {
     }
 }
 
-async function loadRemoteDomains() {
-    const domainContent = await fetchFileContent('domains.json', false);
+async function loadRemoteDomains(remoteConfig = activeRemoteConfig) {
+    const domainContent = await fetchFileContent('domains.json', false, remoteConfig);
     if (!domainContent) return DEFAULT_DOMAIN_MAP;
     try {
         const parsed = JSON.parse(domainContent);
@@ -164,15 +218,15 @@ async function loadRemoteDomains() {
     }
 }
 
-async function resolveAgentsForDomain(domainName, useLocal) {
-    const domains = useLocal ? loadLocalDomains() : await loadRemoteDomains();
+async function resolveAgentsForDomain(domainName, useLocal, remoteConfig = activeRemoteConfig) {
+    const domains = useLocal ? loadLocalDomains() : await loadRemoteDomains(remoteConfig);
     const selected = domains[domainName];
     return Array.isArray(selected) ? selected : null;
 }
 
-async function getAvailableAgentNames(useLocal) {
+async function getAvailableAgentNames(useLocal, remoteConfig = activeRemoteConfig) {
     if (useLocal) return getLocalAgentNames();
-    const files = await listGithubFiles('agents');
+    const files = await listGithubFiles('agents', remoteConfig);
     return files
         .filter((f) => f.endsWith('.md'))
         .map((f) => path.basename(f, '.md'))
@@ -189,11 +243,11 @@ function resolveAssistants(assistant) {
     return [assistant];
 }
 
-async function gatherSkillFiles(skillPath, useLocal) {
+async function gatherSkillFiles(skillPath, useLocal, remoteConfig = activeRemoteConfig) {
     const files = { skill: null, references: [], scripts: [] };
     
     // 1. Fetch SKILL.md
-    files.skill = await fetchFileContent(`skills/${skillPath}/SKILL.md`, useLocal);
+    files.skill = await fetchFileContent(`skills/${skillPath}/SKILL.md`, useLocal, remoteConfig);
     
     // 2. Fetch references and scripts
     if (useLocal) {
@@ -214,15 +268,15 @@ async function gatherSkillFiles(skillPath, useLocal) {
         }
     } else {
         // Fetch from GitHub
-        const refFiles = await listGithubFiles(`skills/${skillPath}/references`);
+        const refFiles = await listGithubFiles(`skills/${skillPath}/references`, remoteConfig);
         for (const f of refFiles) {
-            const content = await fetchFileContent(`skills/${skillPath}/references/${f}`, false);
+            const content = await fetchFileContent(`skills/${skillPath}/references/${f}`, false, remoteConfig);
             if (content) files.references.push({ name: f, content });
         }
         
-        const scriptFiles = await listGithubFiles(`skills/${skillPath}/scripts`);
+        const scriptFiles = await listGithubFiles(`skills/${skillPath}/scripts`, remoteConfig);
         for (const f of scriptFiles) {
-            const content = await fetchFileContent(`skills/${skillPath}/scripts/${f}`, false);
+            const content = await fetchFileContent(`skills/${skillPath}/scripts/${f}`, false, remoteConfig);
             if (content) files.scripts.push({ name: f, content });
         }
     }
@@ -230,7 +284,7 @@ async function gatherSkillFiles(skillPath, useLocal) {
     return files;
 }
 
-async function installAgent(agentName, assistant, useLocal) {
+async function installAgent(agentName, assistant, useLocal, remoteConfig = activeRemoteConfig) {
     const targetDir = ASSISTANT_PATHS[assistant];
     if (!targetDir) {
         console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
@@ -242,7 +296,7 @@ async function installAgent(agentName, assistant, useLocal) {
     console.log(chalk.magenta(`🛡️  Targeting Agent Persona: ${chalk.bold(agentName)}`));
     
     // Fetch Agent file
-    const agentContent = await fetchFileContent(`agents/${agentName}.md`, useLocal);
+    const agentContent = await fetchFileContent(`agents/${agentName}.md`, useLocal, remoteConfig);
     if (!agentContent) {
         console.error(chalk.red(`❌ Agent persona '${agentName}' not found.`));
         return false;
@@ -256,12 +310,12 @@ async function installAgent(agentName, assistant, useLocal) {
     const skillPayloads = [];
     for (const skill of skills) {
         console.log(chalk.yellow(`   ↳ Resolving skill: ${skill}...`));
-        const payload = await gatherSkillFiles(skill, useLocal);
+        const payload = await gatherSkillFiles(skill, useLocal, remoteConfig);
         skillPayloads.push({ name: skill, ...payload });
     }
     
     // Global Rules
-    const globalRules = await fetchFileContent(`global-rules.md`, useLocal);
+    const globalRules = await fetchFileContent(`global-rules.md`, useLocal, remoteConfig);
     
     // Workflows (fetch all for now if available locally or define standard ones)
     
@@ -337,13 +391,13 @@ async function installAgent(agentName, assistant, useLocal) {
     return true;
 }
 
-async function installAgents(agentNames, assistant, useLocal) {
+async function installAgents(agentNames, assistant, useLocal, remoteConfig = activeRemoteConfig) {
     const targetAssistants = resolveAssistants(assistant);
     const failed = [];
 
     for (const targetAssistant of targetAssistants) {
         for (const agentName of agentNames) {
-            const ok = await installAgent(agentName, targetAssistant, useLocal);
+            const ok = await installAgent(agentName, targetAssistant, useLocal, remoteConfig);
             if (!ok) failed.push({ assistant: targetAssistant, agent: agentName });
         }
     }
@@ -370,11 +424,25 @@ async function run() {
       .option('--agent <name>', 'Specify the Agent Persona (e.g., senior-backend, code-auditor)')
       .option('--domain <name>', `Specify a domain bundle (${Object.keys(DEFAULT_DOMAIN_MAP).join(', ')})`)
       .option('-a, --ai <platform>', `Specify the AI assistant (${Object.keys(ASSISTANT_PATHS).join(', ')})`)
+      .option('--source-repo <owner/repo>', 'Override remote source repository (default: package repository or AGENTSKILLS_REPO)')
+      .option('--source-branch <branch>', 'Override remote source branch (default: main or AGENTSKILLS_BRANCH)')
       .option('--local', 'Use local files instead of downloading from GitHub (for development)')
       .action(async (options) => {
           let assistant = options.ai;
           let agent = options.agent ? options.agent.toLowerCase() : null;
           let domain = options.domain ? options.domain.toLowerCase() : null;
+          let remoteConfig = activeRemoteConfig;
+
+          try {
+              remoteConfig = buildRemoteConfig({
+                  sourceRepo: options.sourceRepo,
+                  sourceBranch: options.sourceBranch
+              });
+              activeRemoteConfig = remoteConfig;
+          } catch (err) {
+              console.error(chalk.red(`❌ ${err.message}`));
+              process.exit(1);
+          }
 
           if (agent && domain) {
               console.error(chalk.red('❌ Use either --agent or --domain, not both.'));
@@ -406,9 +474,10 @@ async function run() {
               }]);
 
               if (typeAnswer.selectionType === 'agent') {
-                  const availableAgents = await getAvailableAgentNames(Boolean(options.local));
+                  const availableAgents = await getAvailableAgentNames(Boolean(options.local), remoteConfig);
                   if (availableAgents.length === 0) {
                       console.error(chalk.red('❌ No agent templates found.'));
+                      console.error(chalk.gray(`Checked source: ${remoteConfig.ownerRepo}@${remoteConfig.branch}`));
                       process.exit(1);
                   }
                   const answer = await inquirer.prompt([{
@@ -431,14 +500,14 @@ async function run() {
           }
 
           if (agent) {
-              await installAgents([agent], assistant, Boolean(options.local));
+              await installAgents([agent], assistant, Boolean(options.local), remoteConfig);
           } else {
-              const domainAgents = await resolveAgentsForDomain(domain, Boolean(options.local));
+              const domainAgents = await resolveAgentsForDomain(domain, Boolean(options.local), remoteConfig);
               if (!domainAgents) {
                   console.error(chalk.red(`❌ Unknown domain: ${domain}`));
                   process.exit(1);
               }
-              await installAgents(domainAgents, assistant, Boolean(options.local));
+              await installAgents(domainAgents, assistant, Boolean(options.local), remoteConfig);
           }
       });
 
@@ -458,5 +527,9 @@ module.exports = {
     resolveAgentsForDomain,
     getAvailableAgentNames,
     loadLocalDomains,
-    DEFAULT_DOMAIN_MAP
+    DEFAULT_DOMAIN_MAP,
+    normalizeOwnerRepo,
+    buildRemoteConfig,
+    DEFAULT_SOURCE_REPO,
+    DEFAULT_REPO_BRANCH
 };
