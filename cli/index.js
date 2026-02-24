@@ -10,7 +10,6 @@ let inquirer;
 
 const REPO_URL = 'https://raw.githubusercontent.com/AgentSkills/AgentSkills/main/.agents';
 const LOCAL_DEV_PATH = path.resolve(__dirname, '../.agents');
-
 const ASSISTANT_PATHS = {
     cursor: '.cursor/rules',
     windsurf: '.windsurf/rules',

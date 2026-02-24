@@ -6,7 +6,7 @@ description: Triggers the read-only Auditor agent to scan the codebase for secur
 
 When the user types `/audit` or invokes this workflow:
 
-1. **Adopt Role:** You MUST immediately adopt the **Security & Quality Auditor** persona as defined in `.agents/roles/auditor.md`.
+1. **Adopt Role:** You MUST immediately adopt the **Security & Quality Auditor** persona as defined in `.agents/agents/code-auditor.md`.
 2. **Read Constraints:** Read `.agents/global-rules.md` to ensure your output format is correct (zero fluff, token efficient).
 3. **Action:**
    - Analyze the files currently in the user's active context or the specific files they requested.

@@ -1,4 +1,6 @@
-# AgentSkills, çeşitli yapay zeka kodlama asistanları (Cursor, Copilot, Claude, Gemini, Windsurf vb.) için **evrensel ve modüler bir "Agent-Skill" takım çantası** kuran bir projedir.
+# AgentSkills (V2 Multi-Domain Architecture)
+
+AgentSkills, çeşitli yapay zeka kodlama asistanları (Cursor, Copilot, Claude, Gemini, Windsurf vb.) için **evrensel ve modüler bir "Agent-Skill" takım çantası** kuran bir projedir.
 
 Bu proje sayesinde AI asistanlarınızı sıradan kod botları olmaktan çıkarıp:
 - **Tasarım Sistemi Mimarisi** (*Frontend Performance, UI/UX*),
@@ -6,14 +8,16 @@ Bu proje sayesinde AI asistanlarınızı sıradan kod botları olmaktan çıkar�
 - **Performans Uzmanı** (*Unity ECS, DOTS, C# Bellek Yönetimi*),
 - **Kalite Güvence ve Güvenlik Sorumlusu** gibi "Personalar" haline getirebilirsiniz.
 
-> **YENİ NESİL MİMARİ:** AgentSkills V2 ile birlikte sistem `agents/` (Personalar) ve `skills/` (Yetenek setleri, scriptler ve referanslar) olarak ikiye ayrılmıştır. Örneğin, Cursor'a `senior-backend` kurduğunuzda, sistem sadece o persona'yı değil; onun bağımlı olduğu API Design ve Code Review gibi becerileri de otomatik olarak çözümleyip kurar!
+> **YENİ NESİL MİMARİ:** AgentSkills V2 ile birlikte sistem `.agents/agents/` (Personalar) ve `.agents/skills/` (Yetenek setleri, scriptler ve referanslar) olarak ikiye ayrılmıştır. Örneğin, Cursor'a `senior-backend` kurduğunuzda, sistem sadece o persona'yı değil; onun bağımlı olduğu API Design ve Code Review gibi becerileri de otomatik olarak çözümleyip kurar!
+
+*(Not: Claude Code'un efsanevi `agentTemplates` dizini, projede bir referans arşivi olarak bırakılmıştır ve ilham almak isteyen geliştiriciler tarafından incelenebilir.)*
 
 ## Başlıca Özellikler
 
 1. **Bağlama Sadakat:** Yapay zeka'nın tanımlı bağlamın dışına çıkmaması ve gereksiz "selamlama" ya da şablonsal mesajlardan kaçınması sağlanır.
 2. **Minimum Token, Maksimum Verim:** Token tüketimini her zaman izleyen, kısa ve doğrudan çıktı sunan yönergeler.
-3. **Takım Mimarisi (Roller & İş Akışları):** Frontend, Backend, DevOps, Veritabanı gibi spesifik rollere ayrılmış ajan yetenekleri ve `/audit`, `/commit` gibi tetikleyici iş akışları (workflows).
-4. **Özelleştirilmiş Commit Mesajları:** "Commitle" dendiğinde projeyi analiz edip yalnızca `feat(subject): ***` gibi formatlarla, duruma özgü Git mesajı üreten bir özellik.
+3. **Takım Mimarisi & Beceriler:** Frontend, Backend, DevOps, Game, Veritabanı gibi spesifik rollere ayrılmış ajan yetenekleri ve `/audit`, `/commit`, `/test` gibi tetikleyici iş akışları (workflows).
+4. **Alana Özel Kurulum (Domain-Specific):** İster Web, ister Mobil, ister Oyun (Game) geliştiriyor olun, CLI üzerinden sadece kendi alanınızdaki ajanları yükleyerek yüz binlerce token tasarruf edersiniz.
 
 ## Kurulum (CLI Kullanımı)
 
@@ -26,59 +30,63 @@ npm install -g agentskills-cli
 # İstediğiniz hedef yapay zekaya (Örn: Cursor) bağımlı bir ajan paketini kurun:
 agentskills init --agent senior-backend --ai cursor
 
+# Bütün bir domaini (Örn: Oyun Geliştirme) kurun:
+agentskills init --domain game --ai copilot
+
 # Veya interaktif sihirbazı başlatın:
-agentskills init --agent game-architect
+agentskills init
 ```
 
 ### Desteklenen Asistanlar (`--ai` Parametresi)
-Sistem yazdığınız komuta göre içeriği formatlar:
-- `--ai cursor` veya `windsurf`: Agent ve becerileri (skill/references) harmanlayıp hızlı okunabilir bir `.mdc` dosyası oluşturur.  
-- `--ai copilot` veya `codebuddy`: Sınırlı çoklu-dosya özellikleri yüzünden tüm ajan/yetenek yapısını devasa tek bir `.md` bağlam paketine birleştirir (`copilot-instructions.md`).
-- `--ai claude` veya `antigravity`: Orijinal `/agents` ve `/skills` klasör ve script yapısını olduğu gibi kopyalar.
+Sistem yazdığınız komuta göre içeriği formatlar ve ilgili asistanın dizinine (`.cursor/`, `.trae/`, `.roocode/` vb.) yapılandırır:
+
+**Popüler IDE'ler:**
+- `--ai cursor` veya `--ai windsurf`: Agent ve becerileri (skill/references) harmanlayıp hızlı okunabilir bir `.mdc` dosyası oluşturur. Sadece bu editörlerde çalışan çoklu-dosya kural formatını kullanır.
+- `--ai copilot` veya `--ai codebuddy`: Sınırlı çoklu-dosya özellikleri yüzünden tüm ajan/yetenek yapısını devasa tek bir `.md` bağlam paketine birleştirir (`.github/copilot-instructions.md`).
+
+**Spesifik Yapay Zeka Ajanları ve Terminal CLI'lar:**
+İlgili araçların proje kökünde okudukları özel `.` (nokta) klasörlerine doğrudan kurulum yaparlar. Aşağıdaki komutları terminalinizde çalıştırmanız yeterlidir:
+- **Codex:** `agentskills init --agent prompt-engineer --ai codex` -> `.codex/` dizinine kurar.
+- **Kiro:** `agentskills init --agent senior-backend --ai kiro` -> `.kiro/` dizinine kurar.
+- **Qoder:** `agentskills init --agent game-architect --ai qoder` -> `.qoder/` dizinine kurar.
+- **Roocode:** `agentskills init --agent qa-automation --ai roocode` -> `.roocode/` dizinine kurar.
+- **Trae:** `agentskills init --agent ui-ux-designer --ai trae` -> `.trae/` dizinine kurar.
+- **Claude / Antigravity:** `--ai claude` veya `--ai antigravity` dendiğinde orijinal klasör ağacını olduğu gibi kopyalar.
 
 ### Mevcut Personalar (`--agent` Parametresi)
-Aşağıdaki ajanlardan projenize en uygun olanı seçin:
+Aşağıdaki ajanlardan projenize en uygun olanı seçin. Bu personalar dünyadaki en gelişmiş "Uzman" template'lerinden ilham alınarak yaratılmıştır:
 - `senior-backend`: API tasarımı, DB Optimizasyon, Güvenlik.
 - `senior-frontend`: UI Design Systems, Bundle Analyzer, 60fps Performans.
+- `ui-ux-designer`: Araştırma (NN/g) odaklı Arayüz Eleştirisi, Asimetrik Tasarım ve Tipografi Uzmanı.
 - `game-architect`: Unity C#, Object Pooling, DOTS/ECS Performans.
-- `qa-automation`: Edge-Case Testleri, TDD, Integration Test uzmanı.
+- `qa-automation`: Edge-Case Testleri, TDD, E2E Test uzmanı.
 - `devops-engineer`: CI/CD, AWS/Docker otomasyonları.
 - `code-auditor`: OWASP Top 10, Code Smells analisti (Salt-Okunur).
+- `prompt-engineer`: Token optimizasyonu, Chain-of-Thought (CoT) tasarımı, Hallucination engelleme uzmanı.
 
-*(Eski yöntem olan `install.sh` ve `install.ps1` scriptleri depo içerisinde `scripts/` klasöründe yedek olarak tutulmaktadır.)*
+## İş Akışları (Workflows & Slash Commands)
 
-**Not:** Bu dosyayı GitHub'a pushlamadan önce `YOUR_GITHUB_USERNAME` yazılarını kendi GitHub kullanıcı adınızla değiştirmeyi unutmayın.
+Kurulan markdown dosyalarıyla birlikte, asistanınızı anında bir iş akışına sokabilirsiniz:
 
 ### 1. QA ve Test Otomasyonu (`/test`)
-Yeni eklenen `qa-tester.md` rolü ve `/test` iş akışıyla kodlarınıza Edge-case, Unit test ve entegrasyon testleri (TDD mantığıyla) yazdırabilirsiniz. Sadece dosyayı işaretleyip `/test` yazmanız yeterlidir.
+`qa-automation` ajanı ve `/test` iş akışıyla kodlarınıza Edge-case, Unit test ve entegrasyon testleri yazdırabilirsiniz. Sadece dosyayı işaretleyip IDE'nizde `/test` yazmanız yeterlidir. Ajan TDD mantığına göre hareket eder ve Flakiness (kararsızlık) engelleme kurallarını uygular.
 
-### 2. Dinamik Rol Optimizasyonu (`/manage-roles`)
-Projelerinizde kullanmadığınız ajanların (örn. Backend projesinde Frontend rolü) token tüketmesini engellemek için tasarlanmıştır. IDE üzerinden çağrıldığında projenizin `package.json` gibi dosyalarını analiz eder ve gereksiz rolleri devre dışı bırakır.
+### 2. Proje Denetimi (`/audit`)
+`code-auditor` ile kodunuzda OWASP Top 10 açığı, Memory Leak veya "Arrow Code" / "God Class" kokusu (smell) arayın. Salt-okunurdur ve sadece PDF vari bir rapor üretir.
 
-### 2. Ajanlar Arası Oturum Aktarımı (`cli-continues`)
-Claude, Gemini veya Copilot limitine takıldığınızda bağlamı (context) kaybetmemek için `npx continues` komutunu kullanarak, kaldığınız yerden diğer araçta çalışmaya devam edebilirsiniz. AgentSkills mimarisi formattan kopmadan bu transferi destekler.
+### 3. Otomatik Semantic Versiyonlama (`/commit`)
+Projeyi analiz edip yalnızca `feat(subject): ***` formatında, duruma özgü Git mesajı üretir.
 
-### 3. Kalıcı Uzun Dönem Hafıza (`claude-mem` uyumluluğu)
-Ajanlar, proje üzerinde aldıkları kritik kararları veya tamamladıkları devasa görevleri `.agents/memory/MEMORY.md` dosyasına kaydeder. Yeni bir sohbet başlattığınızda ajan önce bu belleği okur ve geçmişteki bağlamı saniyeler içerisinde hatırlar.
+### 4. Dinamik Rol Optimizasyonu (`/manage-roles`)
+Projelerinizde kullanmadığınız ajanların (örn. Oyun projesinde Web-Backend rolü) token tüketmesini engellemek için tasarlanmıştır. IDE üzerinden çağrıldığında projenizin yapılandırmasını analiz eder ve o an gereksiz olan rolleri devre dışı bırakır (Skill Manager mimarisi).
 
-### 2. GitHub Copilot / Gemini IDE
-Ajan kural setini "Workspace Context" olarak dahil etmeniz gerekir. Sohbet penceresinde `#file` veya `@` referanslarını kullanın.
-- **Komut Örneği:** `@.agents/roles/frontend.md` kurallarına göre bu bileşeni refactor et.
-- **Komut Örneği:** `/commit` işlemi için `@.agents/workflows/commit.md` yönergelerini takip et.
+## Ekosistem Uyumluluğu
 
-### 3. Gemini CLI veya Diğer Terminal Asistanları
-Terminal üzerinden komut gönderirken, ajan rollerini `system-prompt` olarak verebilirsiniz:
-```bash
-# Backend uzmanı olarak dosyayı refactor eder.
-gemini --system-prompt .agents/roles/backend.md "src/api/user.js içindeki N+1 sorununu çöz"
-```
+### Ajanlar Arası Oturum Aktarımı (`cli-continues`)
+Claude, Gemini veya Copilot limitine takıldığınızda bağlamı (context) kaybetmemek için `npx continues` komutunu kullanarak, kaldığınız yerden diğer araçta çalışmaya devam edebilirsiniz. AgentSkills V2 mimarisi formattan kopmadan bu transferi destekler.
 
-Bash içerisinde alias oluşturarak hız kazanabilirsiniz:
-```bash
-alias audit="gemini --system-prompt .agents/roles/auditor.md"
-audit "src/index.js dosyasını güvenlik için denetle"
-```
+### Kalıcı Uzun Dönem Hafıza (`agent-mem` uyumluluğu)
+Ajanlar, proje üzerinde aldıkları kritik kararları veya tamamladıkları devasa görevleri `.agents/memory/MEMORY.md` dosyasına kaydeder. Yeni bir sohbet başlattığınızda ajan önce bu belleği okur ve geçmişteki bağlamı saniyeler içerisinde hatırlar. 
 
-## İstenen Yeni Yetenekleri (Skills) Ekleme
-Her bir yeni persona veya kuralı `roles/` veya `workflows/` klasörüne uyarlayabilirsiniz. 
-`install.ps1` dosyasını güncelleyerek indirme zincirine yeni yeteneklerinizi de katabilirsiniz.
+## Katkıda Bulunma
+Her bir yeni persona veya kuralı `.agents/agents/` ve `.agents/skills/` klasörüne uyarlayabilirsiniz. Yeni beceriler yazdığınızda kendi referans dökümanlarınızı (references/) ve analiz scriptlerinizi (scripts/) koymayı unutmayın.

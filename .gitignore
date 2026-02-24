@@ -105,3 +105,19 @@ yarn-error.log
 .env
 .DS_Store
 cli/node_modules/
+
+# AI Coding Assistant Config Folders
+.cursor/
+.windsurf/
+.claude/
+.gemini/
+.kiro/
+.codex/
+.qoder/
+.roocode/
+.trae/
+.factory/
+.codebuddy/
+.opencode/
+.continue/
+.agent_scripts/

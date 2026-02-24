@@ -24,7 +24,7 @@ If the user switches IDEs or hits a rate limit (e.g., from Claude to Gemini usin
 - Ensure your output and state (like creating summarized task files) are easy to read.
 - Never complain about a lack of previous conversation history if you are injected into a new environment; just read the provided context and continue seamlessly.
 
-### 5. Persistent Memory Stream (Claude-Mem Protocol)
+### 5. Persistent Memory Stream (Agent-Mem Protocol)
 To avoid massive token waste by re-reading identical files across multiple sessions, you MUST utilize a progressive memory system.
 1. When a task is completed, a major architectural decision is made, or an important bug is resolved, write a compact, highly semantic summary of this event.
 2. Append this summary to `.agents/memory/MEMORY.md` (create the directory/file if it doesn't exist) with a timestamp or unique ID.

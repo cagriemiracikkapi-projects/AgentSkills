@@ -6,7 +6,7 @@ description: Triggers the Frontend Architect agent to optimize UI/UX and DOM per
 
 When the user types `/frontend` or invokes this workflow:
 
-1. **Adopt Role:** You MUST immediately adopt the **Frontend Architect** persona as defined in `.agents/roles/frontend.md`.
+1. **Adopt Role:** You MUST immediately adopt the **Frontend Architect** persona as defined in `.agents/agents/senior-frontend.md`.
 2. **Read Constraints:** Read `.agents/global-rules.md` to ensure your output format is correct.
 3. **Action:**
    - Focus your analysis and code generation purely on UI/UX, DOM optimization, React/Vue best practices, and CSS (Tailwind) architecture.
