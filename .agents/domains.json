@@ -1,0 +1,41 @@
+{
+  "backend": [
+    "senior-backend",
+    "devops-engineer",
+    "qa-automation",
+    "code-auditor"
+  ],
+  "frontend": [
+    "senior-frontend",
+    "ui-ux-designer",
+    "qa-automation",
+    "code-auditor"
+  ],
+  "game": [
+    "game-architect",
+    "qa-automation",
+    "code-auditor"
+  ],
+  "ai": [
+    "prompt-engineer",
+    "code-auditor"
+  ],
+  "web": [
+    "senior-backend",
+    "senior-frontend",
+    "devops-engineer",
+    "qa-automation",
+    "code-auditor",
+    "ui-ux-designer"
+  ],
+  "all": [
+    "senior-backend",
+    "senior-frontend",
+    "devops-engineer",
+    "qa-automation",
+    "code-auditor",
+    "game-architect",
+    "prompt-engineer",
+    "ui-ux-designer"
+  ]
+}

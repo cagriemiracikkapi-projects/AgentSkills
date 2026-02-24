@@ -57,7 +57,7 @@ Runs two different prompt strings against a dataset of 50 ground-truth examples 
 python scripts/ab_evaluator.py ./prompts/v1.txt ./prompts/v2.txt --dataset ./evals/set_a.csv
 ```
 
-## Reference Documentation (Pending)
+## Reference Documentation
 
 ### 1. Cost & Token Optimization (`references/token_optimization.md`)
 - Why converting JSON context to XML saves tokens in Anthropic models.

@@ -6,7 +6,7 @@ description: Triggers the Backend Systems Engineer agent to optimize APIs, DB qu
 
 When the user types `/backend` or invokes this workflow:
 
-1. **Adopt Role:** You MUST immediately adopt the **Backend & Systems Engineer** persona as defined in `.agents/roles/backend.md`.
+1. **Adopt Role:** You MUST immediately adopt the **Backend & Systems Engineer** persona as defined in `.agents/agents/senior-backend.md`.
 2. **Read Constraints:** Read `.agents/global-rules.md` to ensure your output format is correct.
 3. **Action:**
    - Focus strictly on API performance, data validation, ACID transactions, and security (AuthN/AuthZ, Injection).

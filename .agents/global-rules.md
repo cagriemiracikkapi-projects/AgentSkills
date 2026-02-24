@@ -29,4 +29,4 @@ To avoid massive token waste by re-reading identical files across multiple sessi
 1. When a task is completed, a major architectural decision is made, or an important bug is resolved, write a compact, highly semantic summary of this event.
 2. Append this summary to `.agents/memory/MEMORY.md` (create the directory/file if it doesn't exist) with a timestamp or unique ID.
 3. At the start of a new session, ALWAYS read `.agents/memory/MEMORY.md` first to regain contextual awareness before asking the user redundant questions or searching the repository again.
-3. **Explanation:** One concise sentence explaining *why* the change was made.
+4. **Explanation:** One concise sentence explaining *why* the change was made.

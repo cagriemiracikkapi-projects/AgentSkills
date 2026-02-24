@@ -4,16 +4,34 @@ const { program } = require('commander');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const { version: CLI_VERSION } = require('./package.json');
 
 let chalk;
 let inquirer;
 
 const REPO_URL = 'https://raw.githubusercontent.com/AgentSkills/AgentSkills/main/.agents';
 const LOCAL_DEV_PATH = path.resolve(__dirname, '../.agents');
+const DEFAULT_DOMAIN_MAP = {
+    backend: ['senior-backend', 'devops-engineer', 'qa-automation', 'code-auditor'],
+    frontend: ['senior-frontend', 'ui-ux-designer', 'qa-automation', 'code-auditor'],
+    game: ['game-architect', 'qa-automation', 'code-auditor'],
+    ai: ['prompt-engineer', 'code-auditor'],
+    web: ['senior-backend', 'senior-frontend', 'devops-engineer', 'qa-automation', 'code-auditor', 'ui-ux-designer'],
+    all: [
+        'senior-backend',
+        'senior-frontend',
+        'devops-engineer',
+        'qa-automation',
+        'code-auditor',
+        'game-architect',
+        'prompt-engineer',
+        'ui-ux-designer'
+    ]
+};
 const ASSISTANT_PATHS = {
     cursor: '.cursor/rules',
     windsurf: '.windsurf/rules',
-    claude: '.claude/skills',
+    claude: '.claude',
     gemini: '.gemini',
     antigravity: '.gemini/antigravity',
     copilot: '.github',
@@ -93,24 +111,6 @@ function parseFrontmatter(content) {
     return { skills, mdContent };
 }
 
-// Helper to fetch directory contents locally (simulating GitHub API for local dev)
-function getLocalFilesRecursively(dirPath, baseDir) {
-    let results = [];
-    if (!fs.existsSync(dirPath)) return results;
-    
-    const list = fs.readdirSync(dirPath);
-    list.forEach(file => {
-        file = path.join(dirPath, file);
-        const stat = fs.statSync(file);
-        if (stat && stat.isDirectory()) { 
-            results = results.concat(getLocalFilesRecursively(file, baseDir));
-        } else { 
-            results.push(path.relative(baseDir, file).replace(/\\/g, '/'));
-        }
-    });
-    return results;
-}
-
 // Minimal GitHub API abstraction to list files in a directory
 async function listGithubFiles(repoPath) {
     const url = `https://api.github.com/repos/AgentSkills/AgentSkills/contents/.agents/${repoPath}`;
@@ -130,6 +130,63 @@ async function listGithubFiles(repoPath) {
             });
         }).on('error', () => resolve([]));
     });
+}
+
+function getLocalAgentNames() {
+    const dir = path.join(LOCAL_DEV_PATH, 'agents');
+    if (!fs.existsSync(dir)) return [];
+    return fs
+        .readdirSync(dir)
+        .filter((f) => f.endsWith('.md'))
+        .map((f) => path.basename(f, '.md'))
+        .sort();
+}
+
+function loadLocalDomains() {
+    const domainFile = path.join(LOCAL_DEV_PATH, 'domains.json');
+    if (!fs.existsSync(domainFile)) return DEFAULT_DOMAIN_MAP;
+    try {
+        const parsed = JSON.parse(fs.readFileSync(domainFile, 'utf8'));
+        return { ...DEFAULT_DOMAIN_MAP, ...parsed };
+    } catch {
+        return DEFAULT_DOMAIN_MAP;
+    }
+}
+
+async function loadRemoteDomains() {
+    const domainContent = await fetchFileContent('domains.json', false);
+    if (!domainContent) return DEFAULT_DOMAIN_MAP;
+    try {
+        const parsed = JSON.parse(domainContent);
+        return { ...DEFAULT_DOMAIN_MAP, ...parsed };
+    } catch {
+        return DEFAULT_DOMAIN_MAP;
+    }
+}
+
+async function resolveAgentsForDomain(domainName, useLocal) {
+    const domains = useLocal ? loadLocalDomains() : await loadRemoteDomains();
+    const selected = domains[domainName];
+    return Array.isArray(selected) ? selected : null;
+}
+
+async function getAvailableAgentNames(useLocal) {
+    if (useLocal) return getLocalAgentNames();
+    const files = await listGithubFiles('agents');
+    return files
+        .filter((f) => f.endsWith('.md'))
+        .map((f) => path.basename(f, '.md'))
+        .sort();
+}
+
+function getDomainChoices(useLocal) {
+    const domains = useLocal ? loadLocalDomains() : DEFAULT_DOMAIN_MAP;
+    return Object.keys(domains).sort();
+}
+
+function resolveAssistants(assistant) {
+    if (assistant === 'all') return ['cursor', 'claude', 'copilot'];
+    return [assistant];
 }
 
 async function gatherSkillFiles(skillPath, useLocal) {
@@ -177,7 +234,7 @@ async function installAgent(agentName, assistant, useLocal) {
     const targetDir = ASSISTANT_PATHS[assistant];
     if (!targetDir) {
         console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
-        return;
+        return false;
     }
 
     const fullTargetDir = path.join(process.cwd(), targetDir);
@@ -188,7 +245,7 @@ async function installAgent(agentName, assistant, useLocal) {
     const agentContent = await fetchFileContent(`agents/${agentName}.md`, useLocal);
     if (!agentContent) {
         console.error(chalk.red(`❌ Agent persona '${agentName}' not found.`));
-        return;
+        return false;
     }
     
     ensureDirSync(fullTargetDir);
@@ -247,8 +304,8 @@ async function installAgent(agentName, assistant, useLocal) {
     }
     else {
         // CURSOR / WINDSURF (.mdc or flat structure)
-        const isCursor = assistant === 'cursor';
-        const ext = isCursor ? '.mdc' : '.md';
+        const isCursorLike = assistant === 'cursor' || assistant === 'windsurf';
+        const ext = isCursorLike ? '.mdc' : '.md';
         
         let agentMdc = `---\ndescription: Agent Persona - ${agentName}\nglobs: *\n---\n\n`;
         agentMdc += `# Global Rules\n${globalRules || ''}\n\n`;
@@ -277,6 +334,27 @@ async function installAgent(agentName, assistant, useLocal) {
     }
     
     console.log(chalk.blue.bold(`\n🎉 Successfully installed ${agentName} for ${assistant}!`));
+    return true;
+}
+
+async function installAgents(agentNames, assistant, useLocal) {
+    const targetAssistants = resolveAssistants(assistant);
+    const failed = [];
+
+    for (const targetAssistant of targetAssistants) {
+        for (const agentName of agentNames) {
+            const ok = await installAgent(agentName, targetAssistant, useLocal);
+            if (!ok) failed.push({ assistant: targetAssistant, agent: agentName });
+        }
+    }
+
+    if (failed.length > 0) {
+        console.error(chalk.red(`\n❌ Failed to install ${failed.length} item(s):`));
+        for (const item of failed) {
+            console.error(chalk.red(` - ${item.agent} -> ${item.assistant}`));
+        }
+        process.exitCode = 1;
+    }
 }
 
 async function run() {
@@ -285,16 +363,23 @@ async function run() {
     program
       .name('agentskills')
       .description('CLI to seamlessly install Universal Agent Roles & Skills into your AI assistant.')
-      .version('2.0.0');
+      .version(CLI_VERSION);
 
     program.command('init')
-      .description('Initialize an Agent Persona for a specific AI assistant')
-      .requiredOption('--agent <name>', 'Specify the Agent Persona (e.g., senior-backend, code-auditor)')
+      .description('Initialize AgentSkills by persona (--agent) or bundle (--domain) for a specific AI assistant')
+      .option('--agent <name>', 'Specify the Agent Persona (e.g., senior-backend, code-auditor)')
+      .option('--domain <name>', `Specify a domain bundle (${Object.keys(DEFAULT_DOMAIN_MAP).join(', ')})`)
       .option('-a, --ai <platform>', `Specify the AI assistant (${Object.keys(ASSISTANT_PATHS).join(', ')})`)
       .option('--local', 'Use local files instead of downloading from GitHub (for development)')
       .action(async (options) => {
           let assistant = options.ai;
-          let agent = options.agent.toLowerCase();
+          let agent = options.agent ? options.agent.toLowerCase() : null;
+          let domain = options.domain ? options.domain.toLowerCase() : null;
+
+          if (agent && domain) {
+              console.error(chalk.red('❌ Use either --agent or --domain, not both.'));
+              process.exit(1);
+          }
 
           if (!assistant) {
              const answer = await inquirer.prompt([{
@@ -307,21 +392,71 @@ async function run() {
           }
 
           assistant = assistant.toLowerCase();
+          if (!ASSISTANT_PATHS[assistant]) {
+              console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
+              process.exit(1);
+          }
 
-          if (assistant === 'all') {
-              const common = ['cursor', 'claude', 'copilot'];
-              for(const a of common) {
-                  await installAgent(agent, a, options.local);
+          if (!agent && !domain) {
+              const typeAnswer = await inquirer.prompt([{
+                  type: 'list',
+                  name: 'selectionType',
+                  message: 'Do you want to install a single agent or a domain bundle?',
+                  choices: ['agent', 'domain']
+              }]);
+
+              if (typeAnswer.selectionType === 'agent') {
+                  const availableAgents = await getAvailableAgentNames(Boolean(options.local));
+                  if (availableAgents.length === 0) {
+                      console.error(chalk.red('❌ No agent templates found.'));
+                      process.exit(1);
+                  }
+                  const answer = await inquirer.prompt([{
+                      type: 'list',
+                      name: 'agent',
+                      message: 'Select an agent persona:',
+                      choices: availableAgents
+                  }]);
+                  agent = answer.agent;
+              } else {
+                  const domainChoices = getDomainChoices(Boolean(options.local));
+                  const answer = await inquirer.prompt([{
+                      type: 'list',
+                      name: 'domain',
+                      message: 'Select a domain bundle:',
+                      choices: domainChoices
+                  }]);
+                  domain = answer.domain;
               }
+          }
+
+          if (agent) {
+              await installAgents([agent], assistant, Boolean(options.local));
           } else {
-              await installAgent(agent, assistant, options.local);
+              const domainAgents = await resolveAgentsForDomain(domain, Boolean(options.local));
+              if (!domainAgents) {
+                  console.error(chalk.red(`❌ Unknown domain: ${domain}`));
+                  process.exit(1);
+              }
+              await installAgents(domainAgents, assistant, Boolean(options.local));
           }
       });
 
     program.parse(process.argv);
 }
 
-run().catch(err => {
-    console.error(err);
-    process.exit(1);
-});
+if (require.main === module) {
+    run().catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    parseFrontmatter,
+    resolveAssistants,
+    resolveAgentsForDomain,
+    getAvailableAgentNames,
+    loadLocalDomains,
+    DEFAULT_DOMAIN_MAP
+};

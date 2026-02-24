@@ -37,6 +37,8 @@ agentskills init --domain game --ai copilot
 agentskills init
 ```
 
+> Not: `--agent` ve `--domain` parametreleri birbirini dışlar; aynı komutta birlikte kullanılmaz.
+
 ### Desteklenen Asistanlar (`--ai` Parametresi)
 Sistem yazdığınız komuta göre içeriği formatlar ve ilgili asistanın dizinine (`.cursor/`, `.trae/`, `.roocode/` vb.) yapılandırır:
 
@@ -63,6 +65,14 @@ Aşağıdaki ajanlardan projenize en uygun olanı seçin. Bu personalar dünyada
 - `devops-engineer`: CI/CD, AWS/Docker otomasyonları.
 - `code-auditor`: OWASP Top 10, Code Smells analisti (Salt-Okunur).
 - `prompt-engineer`: Token optimizasyonu, Chain-of-Thought (CoT) tasarımı, Hallucination engelleme uzmanı.
+
+### Domain Paketleri (`--domain` Parametresi)
+- `backend`: `senior-backend`, `devops-engineer`, `qa-automation`, `code-auditor`
+- `frontend`: `senior-frontend`, `ui-ux-designer`, `qa-automation`, `code-auditor`
+- `game`: `game-architect`, `qa-automation`, `code-auditor`
+- `ai`: `prompt-engineer`, `code-auditor`
+- `web`: `senior-backend`, `senior-frontend`, `devops-engineer`, `qa-automation`, `code-auditor`, `ui-ux-designer`
+- `all`: Tüm desteklenen personalar
 
 ## İş Akışları (Workflows & Slash Commands)
 
