@@ -77,6 +77,7 @@ const DEFAULT_DOMAIN_MAP = {
         'ui-ux-designer'
     ]
 };
+const DEFAULT_WORKFLOW_FILES = ['audit.md', 'commit.md', 'frontend.md', 'manage-roles.md', 'test.md'];
 const ASSISTANT_PATHS = {
     cursor: '.cursor/rules',
     windsurf: '.windsurf/rules',
@@ -303,9 +304,12 @@ async function gatherWorkflowFiles(useLocal, remoteConfig = activeRemoteConfig) 
         return workflows;
     }
 
-    const files = (await listGithubFiles('workflows', remoteConfig))
+    let files = (await listGithubFiles('workflows', remoteConfig))
         .filter((f) => f.endsWith('.md'))
         .sort();
+    if (files.length === 0) {
+        files = [...DEFAULT_WORKFLOW_FILES];
+    }
     for (const file of files) {
         const content = await fetchFileContent(`workflows/${file}`, false, remoteConfig);
         if (content) workflows.push({ name: file, content });

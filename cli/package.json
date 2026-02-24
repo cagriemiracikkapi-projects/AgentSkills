@@ -1,6 +1,6 @@
 {
   "name": "@cagriemiracikkapi-projects/agentskills-cli",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Install AI Agent Skills directly into your project's AI assistant directory (Cursor, Copilot, Claude, Gemini, etc.)",
   "main": "index.js",
   "bin": {
