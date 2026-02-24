@@ -401,6 +401,13 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
             for (const workflow of workflows) {
                 fs.writeFileSync(path.join(workflowDest, workflow.name), workflow.content);
             }
+            if (assistant === 'claude' || assistant === 'antigravity') {
+                const commandsDest = path.join(fullTargetDir, `commands`);
+                ensureDirSync(commandsDest);
+                for (const workflow of workflows) {
+                    fs.writeFileSync(path.join(commandsDest, workflow.name), workflow.content);
+                }
+            }
         }
         console.log(chalk.green(`✅ Extracted folders and scripts for ${assistant}.`));
     }
@@ -441,9 +448,18 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 console.log(chalk.gray(`   ↳ Extracted scripts to .agent_scripts/`));
             }
         }
+        let commandsDir = null;
+        if (isCursorLike && workflows.length > 0) {
+            commandsDir = path.join(path.dirname(fullTargetDir), 'commands');
+            ensureDirSync(commandsDir);
+        }
         for (const workflow of workflows) {
             const workflowName = path.basename(workflow.name, '.md');
-            fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
+            if (isCursorLike) {
+                fs.writeFileSync(path.join(commandsDir, workflow.name), workflow.content);
+            } else {
+                fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
+            }
         }
         
         console.log(chalk.green(`✅ Packed Agent and Skills into ${agentName}${ext}`));

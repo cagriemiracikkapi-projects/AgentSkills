@@ -219,6 +219,8 @@ flowchart TD
 ## Workflow Rehberi (5/5)
 
 Workflow’lar, kurulumdan sonra AI içinde slash komutları olarak çalışır.
+Cursor için kaynak klasör: `.cursor/commands/*.md`
+Antigravity için kaynak klasör: `.gemini/antigravity/commands/*.md`
 
 | Workflow | Amaç | Nasıl çağrılır? | Beklenen çıktı |
 |---|---|---|---|
@@ -244,8 +246,12 @@ sequenceDiagram
 Örnek (`--agent senior-backend --ai cursor`):
 ```text
 .cursor/
+  commands/
+    audit.md
+    test.md
   rules/
     senior-backend.mdc
+    global-rules.mdc
 .agent_scripts/
   development_api-design/
   development_database-optimization/
@@ -292,7 +298,7 @@ sequenceDiagram
 
 5. Workflow çalışmıyor
 - Neden: Agent kurulmamış veya yanlış platform klasörüne kurulmuş olabilir.
-- Çözüm: İlgili agent’i doğru `--ai` hedefiyle yeniden kurun.
+- Çözüm: Cursor için `.cursor/commands/`, Antigravity için `.gemini/antigravity/commands/` altında `audit.md`, `test.md` gibi dosyaların oluştuğunu kontrol edin. Sonra yeni chat açın.
 
 6. `Kurulum yaptım ama direkt prompt etkisiz görünüyor`
 - Neden: AI paneli eski oturumdan kuralları cache'lemiş olabilir.
