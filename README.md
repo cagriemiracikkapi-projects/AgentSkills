@@ -12,27 +12,38 @@ Bu depo, Codex, Claude ve Gemini gibi yapay zeka asistanları için optimize edi
 ## Kurulum ve Entegrasyon
 Bu yapıyı ("Müşterek Kurallar", "Roller" ve "İş Akışları") herhangi bir projenize hızlıca indirmek için aşağıdaki betikleri kullanabilirsiniz:
 
-### Windows İçin (PowerShell)
-Projenizin ana klasöründe PowerShell açın ve aşağıdaki komutu çalıştırın:
-```powershell
-iex (irm https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/AgentSkills/main/install.ps1)
+### 🚀 Hızlı Kurulum (Yeni CLI)
+
+Artık ajanları kendi yapay zeka asistanınıza (Cursor, Copilot, Claude vb.) tek bir komutla, o asistana en uygun formatta kurabilirsiniz!
+
+```bash
+# 1. CLI aracını global olarak kurun
+npm install -g agentskills-cli
+
+# 2. Projenizin dizinine gidin
+cd /sizin/projeniz
+
+# 3. Kullandığınız yapay zeka aracına göre ajanları başlatın:
+agentskills init --ai cursor      # Cursor (.cursor/rules/ içine kurar)
+agentskills init --ai copilot     # GitHub Copilot (.github/copilot-instructions.md oluşturur)
+agentskills init --ai claude      # Claude Code (.claude/skills/ içine kurar)
+agentskills init --ai windsurf    # Windsurf (.windsurf/rules/ içine kurar)
+agentskills init --ai gemini      # Gemini CLI (.gemini/ dizinine kurar)
+agentskills init --ai all         # En popüler asistanlara aynı anda kurar
 ```
 
-### macOS / Linux İçin
-```bash
-curl -sL https://raw.githubusercontent.com/<YOUR_GITHUB_USERNAME>/AgentSkills/main/install.sh | bash
-```
+*(Eski yöntem olan `install.sh` ve `install.ps1` scriptleri depo içerisinde `scripts/` klasöründe yedek olarak tutulmaktadır.)*
 
 **Not:** Bu dosyayı GitHub'a pushlamadan önce `YOUR_GITHUB_USERNAME` yazılarını kendi GitHub kullanıcı adınızla değiştirmeyi unutmayın.
 
-## Ajanları IDE ve CLI'da Kullanma (Yol Haritası)
+### 1. Dinamik Rol Optimizasyonu (`/manage-roles`)
+Projelerinizde kullanmadığınız ajanların (örn. Backend projesinde Frontend rolü) token tüketmesini engellemek için tasarlanmıştır. IDE üzerinden çağrıldığında projenizin `package.json` gibi dosyalarını analiz eder ve gereksiz rolleri devre dışı bırakır.
 
-Ajanlar (Roller) ve İş Akışları (Workflows), farklı araçlarda şu şekilde kullanılabilir:
+### 2. Ajanlar Arası Oturum Aktarımı (`cli-continues`)
+Claude, Gemini veya Copilot limitine takıldığınızda bağlamı (context) kaybetmemek için `npx continues` komutunu kullanarak, kaldığınız yerden diğer araçta çalışmaya devam edebilirsiniz. AgentSkills mimarisi formattan kopmadan bu transferi destekler.
 
-### 1. Cursor IDE
-Kurulum scripti ajanları oluşturur. Cursor, Cmd+K veya Chat bölümünde `@` işareti ile bu dosyaları bağlama dahil edebilir.
-- **Komut Örneği:** `Sen `@auditor` rolündesin. `@login.ts` dosyasını incele ve bana bir denetim raporu sun.`
-- **İş Akışı Örneği:** Sadece `/audit` yazarak `.agents/workflows/audit.md` dosyasındaki talimatları tetikleyebilirsiniz.
+### 3. Kalıcı Uzun Dönem Hafıza (`claude-mem` uyumluluğu)
+Ajanlar, proje üzerinde aldıkları kritik kararları veya tamamladıkları devasa görevleri `.agents/memory/MEMORY.md` dosyasına kaydeder. Yeni bir sohbet başlattığınızda ajan önce bu belleği okur ve geçmişteki bağlamı saniyeler içerisinde hatırlar.
 
 ### 2. GitHub Copilot / Gemini IDE
 Ajan kural setini "Workspace Context" olarak dahil etmeniz gerekir. Sohbet penceresinde `#file` veya `@` referanslarını kullanın.
