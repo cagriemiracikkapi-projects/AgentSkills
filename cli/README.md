@@ -27,6 +27,8 @@ npm link
 agentskills --help
 agentskills init --agent senior-backend --ai cursor
 agentskills init --domain game --ai copilot
+agentskills init --domain frontend --ai gemini --dry-run
+agentskills init --domain frontend --ai codex --no-compat
 ```
 
 Optional source overrides:
@@ -38,6 +40,15 @@ Environment alternatives:
 ```bash
 set AGENTSKILLS_REPO=cagriemiracikkapi-projects/AgentSkills
 set AGENTSKILLS_BRANCH=main
+```
+
+New runtime flags:
+```bash
+# default on: compatibility exports (.agents/workflows, extra command paths)
+agentskills init --domain frontend --ai antigravity --no-compat
+
+# default on: cleanup managed legacy files
+agentskills init --domain frontend --ai cursor --no-cleanup-legacy
 ```
 
 ## Publish

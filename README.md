@@ -128,6 +128,8 @@ flowchart LR
 | Interaktif kurulum | `agentskills init` | Agent/domain ve AI seçimini sorar |
 | Yerelden test | `agentskills init --agent code-auditor --ai cursor --local` | `.agents/` içeriğinden kurar |
 | Kaynak repo override | `agentskills init --agent senior-backend --ai cursor --source-repo cagriemiracikkapi-projects/AgentSkills --source-branch main` | Remote içerik kaynağını manuel belirler |
+| Dry-run | `agentskills init --domain frontend --ai gemini --dry-run` | Dosya yazmadan üretim/temizlik özetini gösterir |
+| Compat kapatma | `agentskills init --domain frontend --ai codex --no-compat` | Compat exportları kapatır (default açıktır) |
 
 Parametreler:
 - `--agent <name>`: Tek persona.
@@ -136,6 +138,9 @@ Parametreler:
 - `--local`: Remote yerine yerel `.agents` kaynağı.
 - `--source-repo <owner/repo>`: Remote `.agents` kaynağını override eder.
 - `--source-branch <branch>`: Remote kaynak branch’ini override eder.
+- `--no-compat`: Compatibility exportlarını kapatır (`.agents/workflows`, ek command pathleri).
+- `--no-cleanup-legacy`: AgentSkills tarafından yönetilen legacy dosyaları temizlemeyi kapatır.
+- `--dry-run`: Yazma/silme yapmadan planlanan değişiklikleri raporlar.
 
 Env alternatifleri:
 ```bash
@@ -146,27 +151,29 @@ $env:AGENTSKILLS_BRANCH="main"
 
 ## AI Platform Matrisi
 
-| `--ai` | Hedef dizin | Çıktı formatı |
+| `--ai` | Canonical klasörleme | Compat export (default açık) |
 |---|---|---|
-| `cursor` | `.cursor/rules` | Agent başına `.mdc` |
-| `windsurf` | `.windsurf/rules` | Agent başına `.mdc` |
-| `claude` | `.claude` | `agents/` + `skills/` klasör yapısı |
-| `kiro` | `.kiro` | `agents/` + `skills/` klasör yapısı |
-| `antigravity` | `.gemini/antigravity` | `agents/` + `skills/` klasör yapısı |
-| `copilot` | `.github` | Agent başına tek dosya (`*-instructions.md`) |
-| `codebuddy` | `.codebuddy` | Agent başına tek dosya (`*-instructions.md`) |
-| `gemini` | `.gemini` | Agent başına `.md` |
-| `codex` | `.codex` | Agent başına `.md` |
-| `qoder` | `.qoder` | Agent başına `.md` |
-| `roocode` | `.roocode` | Agent başına `.md` |
-| `trae` | `.trae` | Agent başına `.md` |
-| `opencode` | `.opencode` | Agent başına `.md` |
-| `continue` | `.continue` | Agent başına `.md` |
-| `droid` | `.factory` | Agent başına `.md` |
+| `cursor` | `.cursor/rules/*.mdc` + `.cursor/commands/*.md` | `.agents/workflows/*.md` |
+| `windsurf` | `.windsurf/rules/*.mdc` + `.windsurf/commands/*.md` | `.agents/workflows/*.md` |
+| `claude` | `.claude/agents`, `.claude/skills`, `.claude/commands` | `.agents/workflows/*.md` |
+| `kiro` | `.kiro/agents`, `.kiro/skills`, `.kiro/commands` | `.agents/workflows/*.md` |
+| `antigravity` | `.gemini/antigravity/{agents,skills,commands}` | `.gemini/commands` + `.agents/workflows/*.md` |
+| `gemini` | `.gemini/*.md` + `.gemini/commands/*.md` | `.agents/workflows/*.md` |
+| `codex` | `.codex/*.md` + `AGENTS.md` managed block | `.agents/workflows/*.md` |
+| `copilot` | `.github/*-instructions.md` | `.agents/workflows/*.md` |
+| `codebuddy` | `.codebuddy/*-instructions.md` | `.agents/workflows/*.md` |
+| `qoder` | `.qoder/*.md` | `.agents/workflows/*.md` |
+| `roocode` | `.roocode/*.md` | `.agents/workflows/*.md` |
+| `trae` | `.trae/*.md` | `.agents/workflows/*.md` |
+| `opencode` | `.opencode/*.md` | `.agents/workflows/*.md` |
+| `continue` | `.continue/*.md` | `.agents/workflows/*.md` |
+| `droid` | `.factory/*.md` | `.agents/workflows/*.md` |
 | `all` | kısa yol | Sadece `cursor` + `claude` + `copilot` |
 
-Ek bilgi:
-- Script dosyaları, uygun platformlarda `.agent_scripts/` altına çıkarılır.
+Ek bilgiler:
+- Script dosyaları `.agent_scripts/` altına çıkarılır.
+- Yönetilen dosya envanteri `.agentskills/manifest.json` içinde tutulur.
+- Legacy temizlik yalnız AgentSkills tarafından yönetilen dosyalarda uygulanır.
 
 ## Domain Paketleri
 
@@ -219,8 +226,13 @@ flowchart TD
 ## Workflow Rehberi (5/5)
 
 Workflow’lar, kurulumdan sonra AI içinde slash komutları olarak çalışır.
-Cursor için kaynak klasör: `.cursor/commands/*.md`
-Antigravity için kaynak klasör: `.gemini/antigravity/commands/*.md`
+Temel kural: platformun canonical `commands/` path’i + compat için `.agents/workflows/`.
+Örnekler:
+- Cursor: `.cursor/commands/*.md`
+- Windsurf: `.windsurf/commands/*.md`
+- Claude/Kiro: `.claude/commands/*.md`, `.kiro/commands/*.md`
+- Gemini/Antigravity: `.gemini/commands/*.md`, `.gemini/antigravity/commands/*.md`
+- Tüm desteklenenler: `.agents/workflows/*.md` (compat)
 
 | Workflow | Amaç | Nasıl çağrılır? | Beklenen çıktı |
 |---|---|---|---|
@@ -290,7 +302,7 @@ sequenceDiagram
 
 3. `Unsupported AI assistant`
 - Neden: `--ai` değeri desteklenmiyor.
-- Çözüm: `agentskills init --help` ile geçerli listeyi kullanın.
+- Çözüm: `agentskills init --help` ile geçerli listeyi kullanın. Yaygın typo için CLI öneri verir (`gemin` -> `gemini`).
 
 4. Bazı dosyalar oluşmadı
 - Neden: Yanlış dizinde komut çalıştırılmış olabilir.
@@ -298,11 +310,19 @@ sequenceDiagram
 
 5. Workflow çalışmıyor
 - Neden: Agent kurulmamış veya yanlış platform klasörüne kurulmuş olabilir.
-- Çözüm: Cursor için `.cursor/commands/`, Antigravity için `.gemini/antigravity/commands/` altında `audit.md`, `test.md` gibi dosyaların oluştuğunu kontrol edin. Sonra yeni chat açın.
+- Çözüm: İlgili platformun canonical `commands/` dizinini kontrol edin (bkz. AI Platform Matrisi). Ayrıca compat için `.agents/workflows/` dizininde `audit.md`, `test.md` gibi dosyalar olmalı. Sonra yeni chat açın.
 
 6. `Kurulum yaptım ama direkt prompt etkisiz görünüyor`
 - Neden: AI paneli eski oturumdan kuralları cache'lemiş olabilir.
 - Çözüm: Yeni chat açın veya IDE/AI panelini yeniden başlatın. Gerekirse `agentskills init ...` komutunu proje kökünde tekrar çalıştırın.
+
+7. `Codex, .codex dosyalarını yok sayıyor`
+- Neden: Codex, proje kurallarını `AGENTS.md` üzerinden okur; yalnız `.codex` tek başına yeterli olmayabilir.
+- Çözüm: `agentskills init --domain ... --ai codex` komutunu tekrar çalıştırın ve proje kökünde `AGENTS.md` ile `.agents/workflows/` oluştuğunu doğrulayın.
+
+8. `Eski workflow dosyaları kaldı`
+- Neden: Önceki sürüm başka isimlendirme üretmiş olabilir.
+- Çözüm: Varsayılan olarak AgentSkills managed legacy dosyaları temizler. Gerekirse temizliği zorlamak için aynı komutu tekrar çalıştırın; kapatmak için `--no-cleanup-legacy` kullanın.
 
 ## Katkı
 - Yeni agent eklemek için: `.agents/agents/`

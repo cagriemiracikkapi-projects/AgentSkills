@@ -78,24 +78,100 @@ const DEFAULT_DOMAIN_MAP = {
     ]
 };
 const DEFAULT_WORKFLOW_FILES = ['audit.md', 'commit.md', 'frontend.md', 'manage-roles.md', 'test.md'];
-const ASSISTANT_PATHS = {
-    cursor: '.cursor/rules',
-    windsurf: '.windsurf/rules',
-    claude: '.claude',
-    gemini: '.gemini',
-    antigravity: '.gemini/antigravity',
-    copilot: '.github',
-    kiro: '.kiro',
-    codex: '.codex',
-    qoder: '.qoder',
-    roocode: '.roocode',
-    trae: '.trae',
-    opencode: '.opencode',
-    continue: '.continue',
-    codebuddy: '.codebuddy',
-    droid: '.factory',
-    all: 'all'
+const AGENTSKILLS_META_DIR = '.agentskills';
+const AGENTSKILLS_MANIFEST_PATH = path.join(process.cwd(), AGENTSKILLS_META_DIR, 'manifest.json');
+const ASSISTANT_ALIASES = {
+    gemin: 'gemini',
+    claud: 'claude',
+    copliot: 'copilot'
 };
+
+const ASSISTANT_PROFILES = {
+    cursor: {
+        mode: 'cursorlike',
+        targetDir: '.cursor/rules',
+        roleExt: '.mdc',
+        commandDirs: ['.cursor/commands'],
+        includeInAll: true
+    },
+    windsurf: {
+        mode: 'cursorlike',
+        targetDir: '.windsurf/rules',
+        roleExt: '.mdc',
+        commandDirs: ['.windsurf/commands']
+    },
+    claude: {
+        mode: 'folder',
+        targetDir: '.claude',
+        commandDirs: ['.claude/commands'],
+        includeInAll: true
+    },
+    kiro: {
+        mode: 'folder',
+        targetDir: '.kiro',
+        commandDirs: ['.kiro/commands']
+    },
+    antigravity: {
+        mode: 'folder',
+        targetDir: '.gemini/antigravity',
+        commandDirs: ['.gemini/antigravity/commands', '.gemini/commands']
+    },
+    gemini: {
+        mode: 'flat',
+        targetDir: '.gemini',
+        roleExt: '.md',
+        commandDirs: ['.gemini/commands']
+    },
+    codex: {
+        mode: 'flat',
+        targetDir: '.codex',
+        roleExt: '.md'
+    },
+    qoder: {
+        mode: 'flat',
+        targetDir: '.qoder',
+        roleExt: '.md'
+    },
+    roocode: {
+        mode: 'flat',
+        targetDir: '.roocode',
+        roleExt: '.md'
+    },
+    trae: {
+        mode: 'flat',
+        targetDir: '.trae',
+        roleExt: '.md'
+    },
+    opencode: {
+        mode: 'flat',
+        targetDir: '.opencode',
+        roleExt: '.md'
+    },
+    continue: {
+        mode: 'flat',
+        targetDir: '.continue',
+        roleExt: '.md'
+    },
+    droid: {
+        mode: 'flat',
+        targetDir: '.factory',
+        roleExt: '.md'
+    },
+    copilot: {
+        mode: 'monolithic',
+        targetDir: '.github',
+        includeInAll: true
+    },
+    codebuddy: {
+        mode: 'monolithic',
+        targetDir: '.codebuddy'
+    }
+};
+
+const ASSISTANT_PATHS = Object.keys(ASSISTANT_PROFILES).reduce((acc, key) => {
+    acc[key] = ASSISTANT_PROFILES[key].targetDir;
+    return acc;
+}, { all: 'all' });
 
 async function loadESM() {
     chalk = (await import('chalk')).default;
@@ -106,6 +182,247 @@ function ensureDirSync(dirPath) {
     if (!fs.existsSync(dirPath)) {
         fs.mkdirSync(dirPath, { recursive: true });
     }
+}
+
+function toPosixRelative(filePath) {
+    return path.relative(process.cwd(), filePath).replace(/\\/g, '/');
+}
+
+function ensureDir(dirPath, installState = null) {
+    if (installState?.dryRun) {
+        return;
+    }
+    ensureDirSync(dirPath);
+}
+
+function trackGeneratedFile(filePath, installState = null) {
+    if (!installState) return;
+    installState.generatedFiles.add(toPosixRelative(path.resolve(filePath)));
+}
+
+function writeFile(filePath, content, installState = null) {
+    ensureDir(path.dirname(filePath), installState);
+    if (!installState?.dryRun) {
+        fs.writeFileSync(filePath, content);
+    }
+    trackGeneratedFile(filePath, installState);
+}
+
+function removeFile(filePath, installState = null) {
+    const normalized = toPosixRelative(path.resolve(filePath));
+    const exists = fs.existsSync(filePath);
+    if (!exists) return;
+    if (!installState?.dryRun) {
+        fs.rmSync(filePath, { force: true });
+    }
+    if (installState) {
+        installState.removedFiles.push(normalized);
+    }
+}
+
+function readManifest() {
+    if (!fs.existsSync(AGENTSKILLS_MANIFEST_PATH)) return { version: 1, assistants: {} };
+    try {
+        const parsed = JSON.parse(fs.readFileSync(AGENTSKILLS_MANIFEST_PATH, 'utf8'));
+        if (!parsed || typeof parsed !== 'object') return { version: 1, assistants: {} };
+        if (!parsed.assistants || typeof parsed.assistants !== 'object') {
+            parsed.assistants = {};
+        }
+        return parsed;
+    } catch {
+        return { version: 1, assistants: {} };
+    }
+}
+
+function writeManifest(manifest, installState = null) {
+    const content = `${JSON.stringify(manifest, null, 2)}\n`;
+    const metaDir = path.dirname(AGENTSKILLS_MANIFEST_PATH);
+    ensureDir(metaDir, installState);
+    if (!installState?.dryRun) {
+        fs.writeFileSync(AGENTSKILLS_MANIFEST_PATH, content);
+    }
+}
+
+function collectLegacyCandidates(assistant, profile) {
+    const candidates = [];
+    if (!profile) return candidates;
+
+    if (assistant === 'cursor' || assistant === 'windsurf') {
+        const ext = profile.roleExt || '.mdc';
+        for (const workflow of DEFAULT_WORKFLOW_FILES) {
+            const workflowName = path.basename(workflow, '.md');
+            candidates.push(path.join(profile.targetDir, `workflows-${workflowName}${ext}`));
+        }
+    }
+
+    if (assistant === 'antigravity') {
+        for (const workflow of DEFAULT_WORKFLOW_FILES) {
+            const workflowName = path.basename(workflow, '.md');
+            candidates.push(path.join(profile.targetDir, `workflows-${workflowName}.md`));
+        }
+    }
+
+    return candidates;
+}
+
+function finalizeInstallState(assistant, profile, installState) {
+    const manifest = readManifest();
+    const assistantState = manifest.assistants[assistant] || { files: [] };
+    const previousFiles = new Set(Array.isArray(assistantState.files) ? assistantState.files : []);
+    const nextFiles = Array.from(installState.generatedFiles).sort();
+    const nextSet = new Set(nextFiles);
+
+    if (installState.cleanupLegacy) {
+        for (const relPath of previousFiles) {
+            if (!nextSet.has(relPath)) {
+                removeFile(path.join(process.cwd(), relPath), installState);
+            }
+        }
+
+        const legacyCandidates = collectLegacyCandidates(assistant, profile);
+        for (const relPath of legacyCandidates) {
+            if (!nextSet.has(relPath.replace(/\\/g, '/'))) {
+                removeFile(path.join(process.cwd(), relPath), installState);
+            }
+        }
+    }
+
+    manifest.version = 1;
+    manifest.assistants[assistant] = {
+        files: nextFiles,
+        updatedAt: new Date().toISOString(),
+        compat: installState.compat
+    };
+    writeManifest(manifest, installState);
+}
+
+function createInstallState(options) {
+    return {
+        dryRun: Boolean(options.dryRun),
+        compat: options.compat !== false,
+        cleanupLegacy: options.cleanupLegacy !== false,
+        generatedFiles: new Set(),
+        removedFiles: []
+    };
+}
+
+function upsertManagedSection(filePath, startMarker, endMarker, sectionContent, installState = null) {
+    const managedBlock = `${startMarker}\n${sectionContent}\n${endMarker}`;
+    const current = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf8') : '';
+
+    const escapedStart = startMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedEnd = endMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const managedRegex = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}`, 'm');
+
+    let next;
+    if (managedRegex.test(current)) {
+        next = current.replace(managedRegex, managedBlock);
+    } else {
+        const prefix = current.trim().length === 0 ? '' : `${current.trimEnd()}\n\n`;
+        next = `${prefix}${managedBlock}\n`;
+    }
+    if (!installState?.dryRun) {
+        fs.writeFileSync(filePath, next);
+    }
+    trackGeneratedFile(filePath, installState);
+}
+
+function resolveManagedAgentsRoot(installState = null) {
+    const agentsRoot = path.join(process.cwd(), '.agents');
+    const markerPath = path.join(agentsRoot, '.agentskills-managed');
+
+    if (!fs.existsSync(agentsRoot)) {
+        ensureDir(agentsRoot, installState);
+        writeFile(markerPath, 'managed by agentskills-cli\n', installState);
+        return agentsRoot;
+    }
+
+    if (fs.existsSync(markerPath)) {
+        return agentsRoot;
+    }
+
+    return null;
+}
+
+function writeManagedAgentsCompat({ agentName, agentContent, globalRules, workflows, installState }) {
+    const agentsRoot = resolveManagedAgentsRoot(installState);
+    if (!agentsRoot) return false;
+
+    const agentsDir = path.join(agentsRoot, 'agents');
+    const workflowsDir = path.join(agentsRoot, 'workflows');
+
+    ensureDir(agentsDir, installState);
+    ensureDir(workflowsDir, installState);
+
+    if (agentName && agentContent) {
+        writeFile(path.join(agentsDir, `${agentName}.md`), agentContent, installState);
+    }
+    if (globalRules) {
+        writeFile(path.join(agentsRoot, 'global-rules.md'), globalRules, installState);
+    }
+    if (Array.isArray(workflows)) {
+        for (const workflow of workflows) {
+            writeFile(path.join(workflowsDir, workflow.name), workflow.content, installState);
+        }
+    }
+
+    return true;
+}
+
+function syncCodexBootstrapFile(installState = null) {
+    const codexDir = path.join(process.cwd(), '.codex');
+    if (!fs.existsSync(codexDir)) return false;
+
+    const allMdFiles = fs.readdirSync(codexDir).filter((f) => f.endsWith('.md')).sort();
+    const roleFiles = allMdFiles.filter((f) => f !== 'global-rules.md' && !f.startsWith('workflows-'));
+    const workflowFiles = allMdFiles.filter((f) => f.startsWith('workflows-'));
+    const globalRulesPath = path.join(codexDir, 'global-rules.md');
+    const hasGlobalRules = fs.existsSync(globalRulesPath);
+
+    const lines = [];
+    lines.push('# AgentSkills Codex Bootstrap');
+    lines.push('');
+    lines.push('When this repository is open in Codex, follow these rules before answering:');
+    lines.push('');
+    lines.push('1. Read `.codex/global-rules.md` first when present.');
+    lines.push('2. Select the most relevant role file from `.codex/*.md` based on user intent.');
+    lines.push('3. Apply matching workflow guidance from `.codex/workflows-*.md` when relevant.');
+    lines.push('4. If helper scripts are needed, use `.agent_scripts/` paths generated by AgentSkills.');
+    lines.push('5. Keep output concise and implementation-focused.');
+    lines.push('');
+
+    if (hasGlobalRules) {
+        lines.push('Global rules file:');
+        lines.push('- `.codex/global-rules.md`');
+        lines.push('');
+    }
+
+    if (roleFiles.length > 0) {
+        lines.push('Installed role files:');
+        for (const roleFile of roleFiles) {
+            lines.push(`- \`.codex/${roleFile}\``);
+        }
+        lines.push('');
+    }
+
+    if (workflowFiles.length > 0) {
+        lines.push('Installed workflow files:');
+        for (const workflowFile of workflowFiles) {
+            lines.push(`- \`.codex/${workflowFile}\``);
+        }
+        lines.push('');
+    }
+
+    const section = lines.join('\n').trimEnd();
+    const agentsFile = path.join(process.cwd(), 'AGENTS.md');
+    upsertManagedSection(
+        agentsFile,
+        '<!-- AGENTSKILLS-CODEX-START -->',
+        '<!-- AGENTSKILLS-CODEX-END -->',
+        section,
+        installState
+    );
+    return true;
 }
 
 async function fetchFileContent(filePath, useLocal, remoteConfig = activeRemoteConfig) {
@@ -240,7 +557,9 @@ function getDomainChoices(useLocal) {
 }
 
 function resolveAssistants(assistant) {
-    if (assistant === 'all') return ['cursor', 'claude', 'copilot'];
+    if (assistant === 'all') {
+        return Object.keys(ASSISTANT_PROFILES).filter((name) => ASSISTANT_PROFILES[name].includeInAll);
+    }
     return [assistant];
 }
 
@@ -317,14 +636,14 @@ async function gatherWorkflowFiles(useLocal, remoteConfig = activeRemoteConfig) 
     return workflows;
 }
 
-async function installAgent(agentName, assistant, useLocal, remoteConfig = activeRemoteConfig) {
-    const targetDir = ASSISTANT_PATHS[assistant];
-    if (!targetDir) {
+async function installAgent(agentName, assistant, useLocal, remoteConfig = activeRemoteConfig, installState = null) {
+    const profile = ASSISTANT_PROFILES[assistant];
+    if (!profile) {
         console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
         return false;
     }
 
-    const fullTargetDir = path.join(process.cwd(), targetDir);
+    const fullTargetDir = path.join(process.cwd(), profile.targetDir);
     console.log(chalk.blue(`\n🚀 Initializing AgentSkills for ${chalk.bold(assistant)}...`));
     console.log(chalk.magenta(`🛡️  Targeting Agent Persona: ${chalk.bold(agentName)}`));
     
@@ -335,7 +654,7 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
         return false;
     }
     
-    ensureDirSync(fullTargetDir);
+    ensureDir(fullTargetDir, installState);
     
     const { skills, mdContent: pureAgentMd } = parseFrontmatter(agentContent);
     console.log(chalk.gray(`📦 Found ${skills.length} dependency skills to resolve.`));
@@ -351,9 +670,24 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
     const globalRules = await fetchFileContent(`global-rules.md`, useLocal, remoteConfig);
     const workflows = await gatherWorkflowFiles(useLocal, remoteConfig);
     console.log(chalk.gray(`📚 Found ${workflows.length} workflow(s).`));
+
+    if (installState?.compat) {
+        const wroteCompat = writeManagedAgentsCompat({
+            agentName,
+            agentContent: pureAgentMd,
+            globalRules,
+            workflows,
+            installState
+        });
+        if (wroteCompat) {
+            console.log(chalk.gray(`   ↳ Synced compatibility export to .agents/workflows`));
+        } else {
+            console.log(chalk.gray(`   ↳ Skipped .agents sync (existing unmanaged .agents detected)`));
+        }
+    }
     
     // Formatting Phase
-    if (assistant === 'copilot' || assistant === 'codebuddy') {
+    if (profile.mode === 'monolithic') {
         // MONOLITHIC BUNDLE
         let bundle = `# Global Ecosystem Rules\n\n${globalRules || ''}\n\n`;
         bundle += `# Agent Persona: ${agentName}\n\n${pureAgentMd}\n\n`;
@@ -371,112 +705,110 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 bundle += `## /${workflowName}\n\n${workflow.content}\n\n`;
             }
         }
-        fs.writeFileSync(path.join(fullTargetDir, `${agentName}-instructions.md`), bundle);
+        writeFile(path.join(fullTargetDir, `${agentName}-instructions.md`), bundle, installState);
         console.log(chalk.green(`✅ Generated monolithic bundle for ${assistant}.`));
     } 
-    else if (assistant === 'claude' || assistant === 'kiro' || assistant === 'antigravity') {
+    else if (profile.mode === 'folder') {
         // FOLDER BUNDLE
         const agentDest = path.join(fullTargetDir, `agents`);
-        ensureDirSync(agentDest);
-        fs.writeFileSync(path.join(agentDest, `${agentName}.md`), pureAgentMd);
+        ensureDir(agentDest, installState);
+        writeFile(path.join(agentDest, `${agentName}.md`), pureAgentMd, installState);
         if (globalRules) {
             const globalRulesDest = path.join(fullTargetDir, `skills`);
-            ensureDirSync(globalRulesDest);
-            fs.writeFileSync(path.join(globalRulesDest, `global-rules.md`), globalRules);
+            ensureDir(globalRulesDest, installState);
+            writeFile(path.join(globalRulesDest, `global-rules.md`), globalRules, installState);
         }
         
         for (const s of skillPayloads) {
             const skillDest = path.join(fullTargetDir, `skills`, s.name);
-            ensureDirSync(skillDest);
-            if (s.skill) fs.writeFileSync(path.join(skillDest, `SKILL.md`), s.skill);
+            ensureDir(skillDest, installState);
+            if (s.skill) writeFile(path.join(skillDest, `SKILL.md`), s.skill, installState);
             
             if (s.references.length > 0) {
-                ensureDirSync(path.join(skillDest, `references`));
-                for (const ref of s.references) fs.writeFileSync(path.join(skillDest, `references`, ref.name), ref.content);
+                ensureDir(path.join(skillDest, `references`), installState);
+                for (const ref of s.references) writeFile(path.join(skillDest, `references`, ref.name), ref.content, installState);
             }
             if (s.scripts.length > 0) {
-                ensureDirSync(path.join(skillDest, `scripts`));
-                for (const scr of s.scripts) fs.writeFileSync(path.join(skillDest, `scripts`, scr.name), scr.content);
+                ensureDir(path.join(skillDest, `scripts`), installState);
+                for (const scr of s.scripts) writeFile(path.join(skillDest, `scripts`, scr.name), scr.content, installState);
             }
         }
         if (workflows.length > 0) {
             const workflowDest = path.join(fullTargetDir, `skills`, `workflows`);
-            ensureDirSync(workflowDest);
+            ensureDir(workflowDest, installState);
             for (const workflow of workflows) {
-                fs.writeFileSync(path.join(workflowDest, workflow.name), workflow.content);
+                writeFile(path.join(workflowDest, workflow.name), workflow.content, installState);
             }
-            if (assistant === 'claude' || assistant === 'antigravity') {
-                const commandDirs = [path.join(fullTargetDir, `commands`)];
-                if (assistant === 'antigravity') {
-                    // Some Antigravity/Gemini setups read commands from .gemini/commands
-                    commandDirs.push(path.join(process.cwd(), '.gemini', 'commands'));
-                }
-                for (const dir of commandDirs) ensureDirSync(dir);
+
+            for (const commandDir of profile.commandDirs || []) {
+                const fullCommandDir = path.join(process.cwd(), commandDir);
+                ensureDir(fullCommandDir, installState);
                 for (const workflow of workflows) {
-                    for (const dir of commandDirs) {
-                        fs.writeFileSync(path.join(dir, workflow.name), workflow.content);
-                    }
+                    writeFile(path.join(fullCommandDir, workflow.name), workflow.content, installState);
                 }
             }
         }
         console.log(chalk.green(`✅ Extracted folders and scripts for ${assistant}.`));
     }
     else {
-        // CURSOR / WINDSURF (.mdc or flat structure)
-        const isCursorLike = assistant === 'cursor' || assistant === 'windsurf';
-        const ext = isCursorLike ? '.mdc' : '.md';
+        // CURSORLIKE / FLAT
+        const isCursorLike = profile.mode === 'cursorlike';
+        const ext = profile.roleExt || '.md';
 
         if (globalRules) {
             const globalRulesFile = path.join(fullTargetDir, `global-rules${ext}`);
             if (isCursorLike) {
                 const globalRulesMdc = `---\ndescription: Global Ecosystem Rules\nglobs: *\n---\n\n${globalRules}`;
-                fs.writeFileSync(globalRulesFile, globalRulesMdc);
+                writeFile(globalRulesFile, globalRulesMdc, installState);
             } else {
-                fs.writeFileSync(globalRulesFile, `# Global Rules\n\n${globalRules}`);
+                writeFile(globalRulesFile, `# Global Rules\n\n${globalRules}`, installState);
             }
         }
         
-        let agentMdc = `---\ndescription: Agent Persona - ${agentName}\nglobs: *\n---\n\n`;
-        agentMdc += `# Global Rules\n${globalRules || ''}\n\n`;
-        agentMdc += `# Agent Persona\n${pureAgentMd}\n\n`;
+        let agentDoc = '';
+        if (isCursorLike) {
+            agentDoc = `---\ndescription: Agent Persona - ${agentName}\nglobs: *\n---\n\n`;
+            agentDoc += `# Global Rules\n${globalRules || ''}\n\n`;
+            agentDoc += `# Agent Persona\n${pureAgentMd}\n\n`;
+        } else {
+            agentDoc = `# Global Rules\n${globalRules || ''}\n\n# Agent Persona\n${pureAgentMd}\n\n`;
+        }
         
         for (const s of skillPayloads) {
-            agentMdc += `## Capability: ${s.name}\n${s.skill || ''}\n`;
+            agentDoc += `## Capability: ${s.name}\n${s.skill || ''}\n`;
             for (const ref of s.references) {
-                agentMdc += `### Reference: ${ref.name}\n<reference>\n${ref.content}\n</reference>\n`;
+                agentDoc += `### Reference: ${ref.name}\n<reference>\n${ref.content}\n</reference>\n`;
             }
         }
         
-        fs.writeFileSync(path.join(fullTargetDir, `${agentName}${ext}`), agentMdc);
+        writeFile(path.join(fullTargetDir, `${agentName}${ext}`), agentDoc, installState);
         
-        // Write scripts to a local hidden tools folder out of the way, since Cursor can't easily execute them attached to the .mdc directly yet
+        // Write scripts to a local hidden tools folder
         for (const s of skillPayloads) {
             if (s.scripts.length > 0) {
                 const scriptDest = path.join(process.cwd(), '.agent_scripts', s.name.replace('/', '_'));
-                ensureDirSync(scriptDest);
-                for (const scr of s.scripts) fs.writeFileSync(path.join(scriptDest, scr.name), scr.content);
+                ensureDir(scriptDest, installState);
+                for (const scr of s.scripts) writeFile(path.join(scriptDest, scr.name), scr.content, installState);
                 console.log(chalk.gray(`   ↳ Extracted scripts to .agent_scripts/`));
             }
         }
-        let commandsDir = null;
-        if (isCursorLike && workflows.length > 0) {
-            commandsDir = path.join(path.dirname(fullTargetDir), 'commands');
-            ensureDirSync(commandsDir);
-        }
-        let geminiCommandsDir = null;
-        if (assistant === 'gemini' && workflows.length > 0) {
-            geminiCommandsDir = path.join(fullTargetDir, 'commands');
-            ensureDirSync(geminiCommandsDir);
-        }
+
         for (const workflow of workflows) {
             const workflowName = path.basename(workflow.name, '.md');
-            if (isCursorLike) {
-                fs.writeFileSync(path.join(commandsDir, workflow.name), workflow.content);
-            } else if (assistant === 'gemini') {
-                fs.writeFileSync(path.join(geminiCommandsDir, workflow.name), workflow.content);
-                fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
-            } else {
-                fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
+            for (const commandDir of profile.commandDirs || []) {
+                const fullCommandDir = path.join(process.cwd(), commandDir);
+                ensureDir(fullCommandDir, installState);
+                writeFile(path.join(fullCommandDir, workflow.name), workflow.content, installState);
+            }
+            if (profile.mode === 'flat') {
+                writeFile(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content, installState);
+            }
+        }
+
+        if (assistant === 'codex') {
+            const syncedBootstrap = syncCodexBootstrapFile(installState);
+            if (syncedBootstrap) {
+                console.log(chalk.gray(`   ↳ Synced Codex bootstrap instructions to AGENTS.md`));
             }
         }
         
@@ -487,14 +819,22 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
     return true;
 }
 
-async function installAgents(agentNames, assistant, useLocal, remoteConfig = activeRemoteConfig) {
+async function installAgents(agentNames, assistant, useLocal, remoteConfig = activeRemoteConfig, installOptions = {}) {
     const targetAssistants = resolveAssistants(assistant);
     const failed = [];
 
     for (const targetAssistant of targetAssistants) {
+        const targetProfile = ASSISTANT_PROFILES[targetAssistant];
+        const targetState = createInstallState(installOptions);
         for (const agentName of agentNames) {
-            const ok = await installAgent(agentName, targetAssistant, useLocal, remoteConfig);
+            const ok = await installAgent(agentName, targetAssistant, useLocal, remoteConfig, targetState);
             if (!ok) failed.push({ assistant: targetAssistant, agent: agentName });
+        }
+        finalizeInstallState(targetAssistant, targetProfile, targetState);
+        if (targetState.dryRun) {
+            console.log(chalk.cyan(`📝 Dry run summary for ${targetAssistant}:`));
+            console.log(chalk.cyan(`   - files to generate/update: ${targetState.generatedFiles.size}`));
+            console.log(chalk.cyan(`   - files to remove: ${targetState.removedFiles.length}`));
         }
     }
 
@@ -523,6 +863,9 @@ async function run() {
       .option('--source-repo <owner/repo>', 'Override remote source repository (default: package repository or AGENTSKILLS_REPO)')
       .option('--source-branch <branch>', 'Override remote source branch (default: main or AGENTSKILLS_BRANCH)')
       .option('--local', 'Use local files instead of downloading from GitHub (for development)')
+      .option('--no-compat', 'Disable compatibility exports (enabled by default)')
+      .option('--no-cleanup-legacy', 'Disable cleanup of managed legacy files')
+      .option('--dry-run', 'Preview writes/removals without modifying files')
       .action(async (options) => {
           let assistant = options.ai;
           let agent = options.agent ? options.agent.toLowerCase() : null;
@@ -550,14 +893,19 @@ async function run() {
                  type: 'list',
                  name: 'assistant',
                  message: 'Which AI Assistant are you installing AgentSkills for?',
-                 choices: Object.keys(ASSISTANT_PATHS)
+                 choices: [...Object.keys(ASSISTANT_PROFILES), 'all']
              }]);
              assistant = answer.assistant;
           }
 
           assistant = assistant.toLowerCase();
           if (!ASSISTANT_PATHS[assistant]) {
-              console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
+              const suggestion = ASSISTANT_ALIASES[assistant];
+              if (suggestion) {
+                  console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}. Did you mean '${suggestion}'?`));
+              } else {
+                  console.error(chalk.red(`❌ Unsupported AI assistant: ${assistant}`));
+              }
               process.exit(1);
           }
 
@@ -596,14 +944,22 @@ async function run() {
           }
 
           if (agent) {
-              await installAgents([agent], assistant, Boolean(options.local), remoteConfig);
+              await installAgents([agent], assistant, Boolean(options.local), remoteConfig, {
+                  dryRun: Boolean(options.dryRun),
+                  compat: Boolean(options.compat),
+                  cleanupLegacy: Boolean(options.cleanupLegacy)
+              });
           } else {
               const domainAgents = await resolveAgentsForDomain(domain, Boolean(options.local), remoteConfig);
               if (!domainAgents) {
                   console.error(chalk.red(`❌ Unknown domain: ${domain}`));
                   process.exit(1);
               }
-              await installAgents(domainAgents, assistant, Boolean(options.local), remoteConfig);
+              await installAgents(domainAgents, assistant, Boolean(options.local), remoteConfig, {
+                  dryRun: Boolean(options.dryRun),
+                  compat: Boolean(options.compat),
+                  cleanupLegacy: Boolean(options.cleanupLegacy)
+              });
           }
       });
 
@@ -624,6 +980,8 @@ module.exports = {
     getAvailableAgentNames,
     loadLocalDomains,
     gatherWorkflowFiles,
+    writeManagedAgentsCompat,
+    syncCodexBootstrapFile,
     DEFAULT_DOMAIN_MAP,
     normalizeOwnerRepo,
     buildRemoteConfig,
