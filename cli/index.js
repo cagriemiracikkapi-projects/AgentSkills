@@ -406,10 +406,16 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
                 fs.writeFileSync(path.join(workflowDest, workflow.name), workflow.content);
             }
             if (assistant === 'claude' || assistant === 'antigravity') {
-                const commandsDest = path.join(fullTargetDir, `commands`);
-                ensureDirSync(commandsDest);
+                const commandDirs = [path.join(fullTargetDir, `commands`)];
+                if (assistant === 'antigravity') {
+                    // Some Antigravity/Gemini setups read commands from .gemini/commands
+                    commandDirs.push(path.join(process.cwd(), '.gemini', 'commands'));
+                }
+                for (const dir of commandDirs) ensureDirSync(dir);
                 for (const workflow of workflows) {
-                    fs.writeFileSync(path.join(commandsDest, workflow.name), workflow.content);
+                    for (const dir of commandDirs) {
+                        fs.writeFileSync(path.join(dir, workflow.name), workflow.content);
+                    }
                 }
             }
         }
@@ -457,10 +463,18 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
             commandsDir = path.join(path.dirname(fullTargetDir), 'commands');
             ensureDirSync(commandsDir);
         }
+        let geminiCommandsDir = null;
+        if (assistant === 'gemini' && workflows.length > 0) {
+            geminiCommandsDir = path.join(fullTargetDir, 'commands');
+            ensureDirSync(geminiCommandsDir);
+        }
         for (const workflow of workflows) {
             const workflowName = path.basename(workflow.name, '.md');
             if (isCursorLike) {
                 fs.writeFileSync(path.join(commandsDir, workflow.name), workflow.content);
+            } else if (assistant === 'gemini') {
+                fs.writeFileSync(path.join(geminiCommandsDir, workflow.name), workflow.content);
+                fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
             } else {
                 fs.writeFileSync(path.join(fullTargetDir, `workflows-${workflowName}${ext}`), workflow.content);
             }
