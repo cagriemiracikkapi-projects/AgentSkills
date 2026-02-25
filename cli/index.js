@@ -819,16 +819,6 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
         }
         
         writeFile(path.join(fullTargetDir, `${agentName}${ext}`), agentDoc, installState);
-        
-        // Write scripts to a local hidden tools folder
-        for (const s of skillPayloads) {
-            if (s.scripts.length > 0) {
-                const scriptDest = path.join(process.cwd(), '.agent_scripts', s.name.replace('/', '_'));
-                ensureDir(scriptDest, installState);
-                for (const scr of s.scripts) writeFile(path.join(scriptDest, scr.name), scr.content, installState);
-                console.log(chalk.gray(`   ↳ Extracted scripts to .agent_scripts/`));
-            }
-        }
 
         for (const workflow of workflows) {
             const workflowName = path.basename(workflow.name, '.md');
@@ -852,6 +842,16 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
         console.log(chalk.green(`✅ Packed Agent and Skills into ${agentName}${ext}`));
     }
     
+    // Always extract scripts to .agent_scripts/ regardless of platform mode
+    for (const s of skillPayloads) {
+        if (s.scripts.length > 0) {
+            const scriptDest = path.join(process.cwd(), '.agent_scripts', s.name.replace('/', '_'));
+            ensureDir(scriptDest, installState);
+            for (const scr of s.scripts) writeFile(path.join(scriptDest, scr.name), scr.content, installState);
+            console.log(chalk.gray(`   ↳ Extracted scripts to .agent_scripts/`));
+        }
+    }
+
     console.log(chalk.blue.bold(`\n🎉 Successfully installed ${agentName} for ${assistant}!`));
     return true;
 }
