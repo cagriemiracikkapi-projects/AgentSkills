@@ -522,8 +522,12 @@ function parseFrontmatter(content) {
 // Minimal GitHub API abstraction to list files in a directory
 async function listGithubFiles(repoPath, remoteConfig = activeRemoteConfig) {
     const url = `${remoteConfig.apiBaseUrl}/${repoPath}?ref=${encodeURIComponent(remoteConfig.branch)}`;
+    const headers = { 'User-Agent': 'AgentSkills-CLI' };
+    if (process.env.GITHUB_TOKEN) {
+        headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
     return new Promise((resolve) => {
-        https.get(url, { headers: { 'User-Agent': 'AgentSkills-CLI' } }, (res) => {
+        https.get(url, { headers }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
@@ -532,6 +536,10 @@ async function listGithubFiles(repoPath, remoteConfig = activeRemoteConfig) {
                     if (Array.isArray(json)) {
                         resolve(json.filter(f => f.type === 'file').map(f => f.name));
                     } else {
+                        if (json?.message?.includes('rate limit')) {
+                            console.warn(chalk.yellow(`\n⚠️  GitHub API rate limit exceeded — script files skipped.`));
+                            console.warn(chalk.yellow(`   Set GITHUB_TOKEN env var for higher limits, or use --local flag.\n`));
+                        }
                         resolve([]);
                     }
                 } catch(e) { resolve([]); }
