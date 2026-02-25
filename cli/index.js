@@ -10,7 +10,11 @@ const CLI_VERSION = packageJson.version;
 let chalk;
 let inquirer;
 
-const LOCAL_DEV_PATH = path.resolve(__dirname, '../.agents');
+// Bundled content (npm package) takes priority; fall back to local dev tree
+const BUNDLED_CONTENT_PATH = path.resolve(__dirname, '.agents');
+const LOCAL_DEV_PATH = fs.existsSync(BUNDLED_CONTENT_PATH)
+    ? BUNDLED_CONTENT_PATH
+    : path.resolve(__dirname, '../.agents');
 const FALLBACK_SOURCE_REPO = 'cagriemiracikkapi-projects/AgentSkills';
 const DEFAULT_REPO_BRANCH = 'main';
 
@@ -522,12 +526,8 @@ function parseFrontmatter(content) {
 // Minimal GitHub API abstraction to list files in a directory
 async function listGithubFiles(repoPath, remoteConfig = activeRemoteConfig) {
     const url = `${remoteConfig.apiBaseUrl}/${repoPath}?ref=${encodeURIComponent(remoteConfig.branch)}`;
-    const headers = { 'User-Agent': 'AgentSkills-CLI' };
-    if (process.env.GITHUB_TOKEN) {
-        headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
-    }
     return new Promise((resolve) => {
-        https.get(url, { headers }, (res) => {
+        https.get(url, { headers: { 'User-Agent': 'AgentSkills-CLI' } }, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
@@ -690,7 +690,12 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
     const fullTargetDir = path.join(process.cwd(), profile.targetDir);
     console.log(chalk.blue(`\n🚀 Initializing AgentSkills for ${chalk.bold(assistant)}...`));
     console.log(chalk.magenta(`🛡️  Targeting Agent Persona: ${chalk.bold(agentName)}`));
-    
+
+    // Prefer bundled content (npm package) over GitHub when available
+    if (!useLocal && fs.existsSync(BUNDLED_CONTENT_PATH)) {
+        useLocal = true;
+    }
+
     // Fetch Agent file
     const agentContent = await fetchFileContent(`agents/${agentName}.md`, useLocal, remoteConfig);
     if (!agentContent) {
