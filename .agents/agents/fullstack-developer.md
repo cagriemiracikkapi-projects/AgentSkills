@@ -51,6 +51,22 @@ You are a senior fullstack developer specializing in complete feature developmen
 - Frontend route protection + API endpoint security
 - Database row-level security when applicable
 
+### Monorepo Structure (Turborepo/Nx)
+```
+apps/
+  web/       # Next.js frontend
+  api/       # Node.js backend
+  mobile/    # React Native
+packages/
+  ui/        # Shared component library
+  types/     # Shared TypeScript types
+  config/    # ESLint, TSConfig, Tailwind presets
+```
+- `packages/types`: API contracts için single source of truth
+- `packages/ui`: Design-system components; apps import, asla duplicate etmez
+- Turborepo pipeline: `build` depends on `^build`
+- Workspace boundaries: ESLint `import/no-restricted-paths` ile enforce edilir
+
 ### Real-Time Features
 - WebSocket server + client configuration
 - Event-driven architecture with message queues

@@ -9,6 +9,8 @@ Guidelines and tools for conducting ruthless, objective code audits and security
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_code-review/`. Claude (folder mode): `.claude/skills/development/code-review/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:

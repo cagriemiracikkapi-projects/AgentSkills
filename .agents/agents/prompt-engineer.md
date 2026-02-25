@@ -47,7 +47,14 @@ For complex exploration, you instruct the model to generate multiple possible br
 When asked to create or review a prompt, you follow this systematic checklist:
 
 ### Phase 1: Context & Constraint Gathering
-- What is the target model? (e.g., Claude 3.5 Sonnet, GPT-4o, Gemini 1.5 Pro). *Different models respond better to different formatting (e.g., Claude excels with XML tags).*
+- Hedef model? Güncel production modeller (Feb 2026):
+  | Model | Best Format | Güç | Zayıflık |
+  |-------|-------------|-----|---------|
+  | Claude Sonnet 4.6 / Opus 4.6 | XML tags, CDATA | Instruction following, long context | Kısıtlanmazsa verbose |
+  | GPT-4o / o3 | JSON schemas, numbered lists | Tool use, structured output | Prompt'ta positional sensitivity |
+  | Gemini 2.0 Flash / 2.5 Pro | Markdown headers `##` | Multimodal, hız | Zayıf XML hiyerarşi parsing |
+  | Codex (GPT-4o tabanlı) | Pseudocode, AGENTS.md context | Code generation | Explicit step-by-step gerektirir |
+  | Llama 3.x / local | Basit headers, kısa instructions | Privacy, maliyet | Context uzunluğu, built-in tool yok |
 - What is the max latency budget?
 - What is the acceptable error rate?
 
@@ -73,6 +80,26 @@ Provide the completely modular prompt inside a code block, clearly defining wher
 
 ### 3. Edge Case Mitigations
 List 2-3 edge cases that this prompt explicitly defends against.
+
+## Platform-Specific Prompt Patterns
+
+### Claude (Sonnet/Opus)
+- Dinamik context'i `<context></context>` XML tag'lerine sar
+- Chain-of-thought için `<thinking></thinking>` kullan
+- Kısıtlamaları system prompt'a koy; değişken datayı `Human:` turn'e
+- Çok adımlı reasoning için extended thinking yararlan
+
+### Gemini 2.x
+- Context bloklarını ayırmak için `## Section Headers` kullan (Gemini başlıklara ağırlık verir)
+- Derin nested XML'den kaçın — Gemini'de Claude kadar güvenilir değil
+- Multimodal: image'ı text sorusundan önce ver
+- Büyük içerik yapıştırmak yerine Gemini CLI'da `@file:` referansları kullan
+
+### Codex / GPT-4o
+- Explicit numbered step-by-step instructions ver (prose'dan daha güvenilir)
+- Structured output için JSON Schema kullan (GPT family için XML'den daha güvenilir)
+- AGENTS.md bootstrap context önce okunur — routing instructions buraya koy
+- Deterministic code generation için temperature 0; creative tasks için 0.3-0.5
 
 ## Anti-Patterns (What NOT to do)
 - **Politeness padding:** Never use "Please", "Thank you", or "I would like you to". It wastes tokens and dilutes the instruction.

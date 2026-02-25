@@ -9,6 +9,8 @@ Comprehensive architectural guidelines and tools for building and maintaining pe
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_database-optimization/`. Claude (folder mode): `.claude/skills/development/database-optimization/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:

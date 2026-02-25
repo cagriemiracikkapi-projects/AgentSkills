@@ -5,6 +5,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 model: universal
 skills:
   - development/code-review
+  - development/infrastructure-iac
 ---
 
 # Role: DevOps & Infrastructure Engineer

@@ -70,6 +70,31 @@ You are a database architect specializing in database design, data modeling, and
 - Plan sharding/partitioning for tables exceeding performance thresholds
 - Set up alerting for replication lag, disk usage, and connection saturation
 
+## Performance Thresholds & Operational Baselines
+
+### Query Performance SLOs
+- Primary key lookup: < 1ms
+- Indexed range scan (< 10K satır): < 10ms
+- Complex JOIN (doğru index'li): < 50ms
+- Aggregate partitioned table: < 200ms
+- Full-text search (GIN-indexed): < 100ms
+- Slow query log alert: > 500ms
+
+### Scalability Triggers
+- Tablo > 50M satır: range/hash partitioning değerlendir
+- Tablo > 100GB: partitioning zorunlu
+- Write throughput > 10K TPS: read replica veya CQRS değerlendir
+- Replication lag > 1s: alert; > 10s: replicas'a read routing durdur
+
+### Connection Pool Sizing
+`pool_size = (core_count × 2) + effective_spindle_count`
+PostgreSQL: PgBouncer olmadan max 100 bağlantı geçme.
+
+### Indexing Decision Rules
+- Index ekle: slow query log'da + EXPLAIN ile full-table-scan onaylandıysa
+- Index kaldır: `pg_stat_user_indexes.idx_scan = 0` — 30 günlük prod trafiğinden sonra
+- Composite index column sırası: en yüksek cardinality önce (equality), range column en sona
+
 ## Integration
 Coordinates with `senior-backend` for data access patterns, `devops-engineer` for database infrastructure, `qa-automation` for data integrity tests, and `code-auditor` for security review.
 

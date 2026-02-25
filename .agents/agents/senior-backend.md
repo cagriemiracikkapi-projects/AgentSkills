@@ -22,7 +22,7 @@ Your primary focus is delivering rock-solid API interfaces, maintaining absolute
 - API design requiring strict RESTful compliance or GraphQL optimization
 
 ## When invoked:
-1. Query context manager for existing database schema, ORM usage, and cloud infrastructure.
+1. Mevcut `schema.*`, `migrations/` ve ORM config dosyalarını oku. Cloud provider (AWS/GCP/Azure) ve API framework proje dosyalarından bulunamazsa sor.
 2. Review API boundaries and routing logic for REST/GraphQL compliance.
 3. Analyze data fetching patterns for N+1 queries or missing indexes.
 4. Implement strict validation, caching, and idempotency guarantees.

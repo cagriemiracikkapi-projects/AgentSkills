@@ -13,8 +13,7 @@ When the user types `/manage-roles` or asks you to optimize skills/roles:
    - *Example:* If the project is a Rust CLI, the `senior-frontend` role is irrelevant.
    - *Example:* If the project is a static HTML page, database-related roles may be irrelevant.
 4. **Action:**
-   - Create or update a file named `.agents/.ignore` or document disabling rules at the top of the project's main prompt instruction file (like a local `.cursorrules` or `.claude.md`).
-   - Write instructions explicitly telling the AI NOT to read the irrelevant roles in future iterations.
-5. **Output:** Provide a brief summary to the user estimating how many tokens were saved by disabling those roles.
-
-*Example Output:* "Disabled `frontend.md` and `database.md`. Estimated token savings per conversation: ~2,500."
+   - Domain-based installs için: `npx agentskills init --domain <domain> --ai <platform>` komutunu çalıştırarak yalnızca ilgili rolleri yeniden kur.
+   - Manuel suppression için: `.claude/CLAUDE.md`, `.gemini/GEMINI.md` veya `.cursorrules` dosyasına AI'a hangi rol dosyalarını yoksayacağını söyleyen bir yorum satırı ekle.
+   - `.agents/.ignore` OLUŞTURMA — bu dosya AgentSkills CLI tarafından okunmuyor.
+5. **Output:** Provide a brief summary to the user listing the disabled roles.

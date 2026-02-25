@@ -79,7 +79,11 @@ const DEFAULT_DOMAIN_MAP = (() => {
         };
     }
 })();
-const DEFAULT_WORKFLOW_FILES = ['audit.md', 'backend.md', 'commit.md', 'frontend.md', 'manage-roles.md', 'test.md'];
+const DEFAULT_WORKFLOW_FILES = [
+    'audit.md', 'backend.md', 'commit.md', 'debug.md',
+    'frontend.md', 'manage-roles.md', 'mobile.md', 'db.md',
+    'ai.md', 'test.md'
+];
 const AGENTSKILLS_META_DIR = '.agentskills';
 const AGENTSKILLS_MANIFEST_PATH = path.join(process.cwd(), AGENTSKILLS_META_DIR, 'manifest.json');
 const ASSISTANT_ALIASES = {

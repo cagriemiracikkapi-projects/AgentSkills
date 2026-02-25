@@ -9,6 +9,8 @@ Comprehensive guidelines and tools for building deterministic, fast, and resilie
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_qa-testing/`. Claude (folder mode): `.claude/skills/development/qa-testing/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:

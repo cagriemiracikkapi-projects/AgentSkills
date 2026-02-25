@@ -30,3 +30,22 @@ To avoid massive token waste by re-reading identical files across multiple sessi
 2. Append this summary to the project's memory file (typically `MEMORY.md` in the agent config directory). Create the directory/file if it doesn't exist.
 3. At the start of a new session, ALWAYS read the memory file first to regain contextual awareness before asking the user redundant questions or searching the repository again.
 4. **Explanation:** One concise sentence explaining *why* the change was made.
+
+## 6. Context Manager — Platform-Spesifik Lookup Protokolü
+"Query context manager" ifadesi agent rollerinde şu anlama gelir:
+- **Claude Code (folder mode):** `Glob` ve `Grep` araçlarıyla `.claude/skills/` ve proje dosyalarını tara.
+- **Gemini CLI:** `@file:` syntax ile dosya referansları ver. `.gemini/*.md` yüklü context için kontrol et.
+- **Codex:** `AGENTS.md` dosya indeksini oku, ardından `.codex/*.md` rol dosyalarını oku.
+- **Cursor/Windsurf:** Rules her zaman inject edilir; `@codebase` veya IDE file reference sistemini kullan.
+- **Tüm platformlar:** Proje yapısından emin değilsen varsaymak yerine kullanıcıya tek hedefli soru sor.
+
+## 7. Error Handling & Fallback
+- Gerekli dosya veya context bulunamazsa şunu çıkar: `[CONTEXT MISSING: <filename>] — mevcut bilgiyle devam ediliyor.`
+- Eksik configuration için asla sessizce varsayılan değer kullanma.
+- Görev tamamlamak için eksik bilgi varsa, devam etmeden önce neyin eksik olduğunu açıkça belirt.
+
+## 8. Token Budget Guidelines
+- Context'te zaten bulunan içeriği tekrar etme.
+- Flat mode'da (Gemini, Codex): Tüm skills önceden bundle'landı. Skills'e yalnızca adıyla referans ver; içeriğini yeniden açıklama.
+- Verbose çıktıyı şunlar için kullan: code blocks, checklists, structured reports. Açıklamalar için kısa nesir.
+- Hedef: kod çıktısı ≥ %60 response token; açıklayıcı nesir ≤ %40.

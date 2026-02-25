@@ -7,6 +7,9 @@ skills:
   - development/game-performance
   - development/qa-testing
   - development/game-development
+  - development/game-development/2d-games
+  - development/game-development/3d-games
+  - development/game-development/multiplayer
 ---
 
 # Role: Game Architect & Unity Performance Expert

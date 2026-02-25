@@ -7,7 +7,7 @@ description: Triggers the read-only Auditor agent to scan the codebase for secur
 When the user types `/audit` or invokes this workflow:
 
 1. **Adopt Role:** You MUST immediately adopt the **code-auditor** persona.
-2. **Read Constraints:** Read the global rules to ensure your output format is correct (zero fluff, token efficient).
+2. **Apply Constraints:** Zero fluff. No preamble. Her bulgu için dosya adı ve satır numarası zorunlu. Severity: Critical, High, Medium, Low only.
 3. **Action:**
    - Analyze the files currently in the user's active context or the specific files they requested.
    - Identify OWASP Top 10 vulnerabilities, N+1 query problems, and architectural flaws.

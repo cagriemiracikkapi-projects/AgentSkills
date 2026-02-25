@@ -9,6 +9,8 @@ Comprehensive architectural guidelines and tools for achieving 60fps rendering a
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_frontend-performance/`. Claude (folder mode): `.claude/skills/development/frontend-performance/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:

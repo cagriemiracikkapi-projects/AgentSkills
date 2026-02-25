@@ -9,6 +9,8 @@ Comprehensive guidelines and tools for building strictly optimized, zero-allocat
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_game-performance/`. Claude (folder mode): `.claude/skills/development/game-performance/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:

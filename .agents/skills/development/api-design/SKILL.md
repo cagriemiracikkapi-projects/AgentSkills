@@ -9,6 +9,8 @@ Comprehensive architectural guidelines and tools for building enterprise-grade b
 
 ## Quick Start
 
+> **Script Paths:** Gemini/Codex/cursorlike: `.agent_scripts/development_api-design/`. Claude (folder mode): `.claude/skills/development/api-design/scripts/`.
+
 ### Main Capabilities
 
 This skill provides three core capabilities through automated scripts:
