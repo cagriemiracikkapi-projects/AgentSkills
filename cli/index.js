@@ -352,10 +352,14 @@ function resolveManagedAgentsRoot(installState = null) {
         return agentsRoot;
     }
 
-    return null;
+    // .agents/ exists but lacks the managed marker — write it and proceed.
+    // writeManagedAgentsCompat only adds files and never removes existing ones,
+    // so this is safe even if the directory was created manually.
+    writeFile(markerPath, 'managed by agentskills-cli\n', installState);
+    return agentsRoot;
 }
 
-function writeManagedAgentsCompat({ agentName, agentContent, globalRules, workflows, installState }) {
+function writeManagedAgentsCompat({ agentName, agentContent, globalRules, workflows, skillPayloads, installState }) {
     const agentsRoot = resolveManagedAgentsRoot(installState);
     if (!agentsRoot) return false;
 
@@ -374,6 +378,27 @@ function writeManagedAgentsCompat({ agentName, agentContent, globalRules, workfl
     if (Array.isArray(workflows)) {
         for (const workflow of workflows) {
             writeFile(path.join(workflowsDir, workflow.name), workflow.content, installState);
+        }
+    }
+    if (Array.isArray(skillPayloads) && skillPayloads.length > 0) {
+        const skillsDir = path.join(agentsRoot, 'skills');
+        ensureDir(skillsDir, installState);
+        for (const s of skillPayloads) {
+            const skillDest = path.join(skillsDir, s.name);
+            ensureDir(skillDest, installState);
+            if (s.skill) writeFile(path.join(skillDest, 'SKILL.md'), s.skill, installState);
+            if (s.references && s.references.length > 0) {
+                ensureDir(path.join(skillDest, 'references'), installState);
+                for (const ref of s.references) {
+                    writeFile(path.join(skillDest, 'references', ref.name), ref.content, installState);
+                }
+            }
+            if (s.scripts && s.scripts.length > 0) {
+                ensureDir(path.join(skillDest, 'scripts'), installState);
+                for (const scr of s.scripts) {
+                    writeFile(path.join(skillDest, 'scripts', scr.name), scr.content, installState);
+                }
+            }
         }
     }
 
@@ -688,12 +713,13 @@ async function installAgent(agentName, assistant, useLocal, remoteConfig = activ
             agentContent: pureAgentMd,
             globalRules,
             workflows,
+            skillPayloads,
             installState
         });
         if (wroteCompat) {
-            console.log(chalk.gray(`   ↳ Synced compatibility export to .agents/workflows`));
+            console.log(chalk.gray(`   ↳ Synced compatibility export to .agents/ (agents, skills, workflows)`));
         } else {
-            console.log(chalk.gray(`   ↳ Skipped .agents sync (existing unmanaged .agents detected)`));
+            console.log(chalk.gray(`   ↳ Skipped .agents sync`));
         }
     }
     
