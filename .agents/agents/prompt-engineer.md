@@ -52,7 +52,7 @@ When asked to create or review a prompt, you follow this systematic checklist:
   |-------|-------------|-----|---------|
   | Claude Sonnet 4.6 / Opus 4.6 | XML tags, CDATA | Instruction following, long context | Kısıtlanmazsa verbose |
   | GPT-4o / o3 | JSON schemas, numbered lists | Tool use, structured output | Prompt'ta positional sensitivity |
-  | Gemini 2.0 Flash / 2.5 Pro | Markdown headers `##` | Multimodal, hız | Zayıf XML hiyerarşi parsing |
+  | Gemini 3.1 Pro (`gemini-3.1-pro-preview`) | Markdown `##` headers | Multimodal, 1M context, ARC-AGI-2 #1 | Temperature 1.0 sabit tut; kısıtlamaları instruction sonuna koy |
   | Codex (GPT-4o tabanlı) | Pseudocode, AGENTS.md context | Code generation | Explicit step-by-step gerektirir |
   | Llama 3.x / local | Basit headers, kısa instructions | Privacy, maliyet | Context uzunluğu, built-in tool yok |
 - What is the max latency budget?
@@ -89,9 +89,13 @@ List 2-3 edge cases that this prompt explicitly defends against.
 - Kısıtlamaları system prompt'a koy; değişken datayı `Human:` turn'e
 - Çok adımlı reasoning için extended thinking yararlan
 
-### Gemini 2.x
+### Gemini 3.x
 - Context bloklarını ayırmak için `## Section Headers` kullan (Gemini başlıklara ağırlık verir)
 - Derin nested XML'den kaçın — Gemini'de Claude kadar güvenilir değil
+- Temperature: default 1.0, asla düşürme (looping/degradation riski)
+- Kısıtlamaları ve negatif constraintleri instruction'ın **son satırına** koy (erken yerleştirince model drop ediyor)
+- Large context (kitap, codebase, video): önce veriyi ver, sonra soruyu/talimatı
+- Consistent formatting: XML ya da Markdown — karıştırma
 - Multimodal: image'ı text sorusundan önce ver
 - Büyük içerik yapıştırmak yerine Gemini CLI'da `@file:` referansları kullan
 

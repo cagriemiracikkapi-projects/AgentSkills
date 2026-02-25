@@ -26,23 +26,56 @@ function lineOf(content, index) {
     return content.slice(0, index).split('\n').length;
 }
 
+const RULES = [
+    {
+        id: 'img-missing-alt',
+        wcag: 'WCAG 1.1.1 (A)',
+        regex: /<img\b(?![^>]*\balt=)[^>]*>/gi,
+        message: 'Image element missing alt attribute.',
+    },
+    {
+        id: 'button-empty',
+        wcag: 'WCAG 4.1.2 (A)',
+        regex: /<button\b[^>]*>\s*<\/button>/gi,
+        message: 'Button has no accessible text content.',
+    },
+    {
+        id: 'positive-tabindex',
+        wcag: 'WCAG 2.4.3 (A)',
+        regex: /tabindex\s*=\s*["']?[1-9]["']?/gi,
+        message: 'Positive tabindex detected; avoid custom tab order.',
+    },
+    {
+        id: 'aria-label-empty',
+        wcag: 'WCAG 4.1.2 (A)',
+        regex: /aria-label\s*=\s*["']\s*["']/gi,
+        message: 'aria-label is present but empty — provide descriptive text.',
+    },
+    {
+        id: 'div-button-no-keyboard',
+        wcag: 'WCAG 2.1.1 (A)',
+        regex: /role\s*=\s*["']button["'][^>]*>(?![^<]*(?:onKeyDown|onKeyPress|onKeyUp|tabIndex|tabindex))/gi,
+        message: 'role="button" on non-button element without keyboard handler (onKeyDown/onKeyPress).',
+    },
+];
+
 function lintFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const findings = [];
 
-    const imgRegex = /<img\b(?![^>]*\balt=)[^>]*>/gi;
-    const buttonRegex = /<button\b[^>]*>\s*<\/button>/gi;
-    const tabindexRegex = /tabindex\s*=\s*["']?[1-9]["']?/gi;
-
-    for (const regex of [imgRegex, buttonRegex, tabindexRegex]) {
+    for (const rule of RULES) {
         let match;
+        const regex = new RegExp(rule.regex.source, rule.regex.flags);
         while ((match = regex.exec(content)) !== null) {
             const line = lineOf(content, match.index);
-            let message = 'Accessibility issue.';
-            if (regex === imgRegex) message = 'Image element missing alt attribute.';
-            if (regex === buttonRegex) message = 'Button has no accessible text content.';
-            if (regex === tabindexRegex) message = 'Positive tabindex detected; avoid custom tab order.';
-            findings.push({ file: filePath, line, message, snippet: match[0] });
+            findings.push({
+                file: filePath,
+                line,
+                id: rule.id,
+                wcag: rule.wcag,
+                message: rule.message,
+                snippet: match[0].slice(0, 120),
+            });
         }
     }
 
@@ -64,7 +97,8 @@ function main() {
     console.log(`Findings: ${findings.length}`);
 
     for (const finding of findings) {
-        console.log(` - ${finding.file}:${finding.line} ${finding.message}`);
+        console.log(` - ${finding.file}:${finding.line}  [${finding.wcag}]  ${finding.message}`);
+        if (finding.snippet) console.log(`     ${finding.snippet}`);
     }
 
     if (findings.length === 0) {

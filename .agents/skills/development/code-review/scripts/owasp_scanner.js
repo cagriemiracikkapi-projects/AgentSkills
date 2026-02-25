@@ -38,6 +38,18 @@ const rules = [
         severity: 'MED',
         regex: /\beval\s*\(/g,
         message: 'eval() usage detected.'
+    },
+    {
+        id: 'A01-broken-access-direct-param',
+        severity: 'HIGH',
+        regex: /(?:find|findOne|findById|where|query)\s*\(\s*\{[^}]*req\.params\.[a-zA-Z_]\w*/g,
+        message: 'Direct use of req.params in DB query without req.user authorization check (potential IDOR).'
+    },
+    {
+        id: 'A02-crypto-weak',
+        severity: 'HIGH',
+        regex: /Math\.random\s*\(\s*\)|(?:createHash|\.hash)\s*\(\s*['"](?:md5|sha1)['"]/gi,
+        message: 'Weak cryptography: Math.random() for tokens or MD5/SHA1 hash detected. Use crypto.randomBytes() and SHA-256+.'
     }
 ];
 

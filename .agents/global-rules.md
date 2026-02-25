@@ -34,7 +34,7 @@ To avoid massive token waste by re-reading identical files across multiple sessi
 ## 6. Context Manager — Platform-Spesifik Lookup Protokolü
 "Query context manager" ifadesi agent rollerinde şu anlama gelir:
 - **Claude Code (folder mode):** `Glob` ve `Grep` araçlarıyla `.claude/skills/` ve proje dosyalarını tara.
-- **Gemini CLI:** `@file:` syntax ile dosya referansları ver. `.gemini/*.md` yüklü context için kontrol et.
+- **Gemini CLI (3.1 Pro):** `@file:` syntax ile dosya referansları ver. Temperature 1.0'dan aşağı çekme. Kısıtlamaları prompt'un son satırına koy. Model ID: `gemini-3.1-pro-preview`.
 - **Codex:** `AGENTS.md` dosya indeksini oku, ardından `.codex/*.md` rol dosyalarını oku.
 - **Cursor/Windsurf:** Rules her zaman inject edilir; `@codebase` veya IDE file reference sistemini kullan.
 - **Tüm platformlar:** Proje yapısından emin değilsen varsaymak yerine kullanıcıya tek hedefli soru sor.

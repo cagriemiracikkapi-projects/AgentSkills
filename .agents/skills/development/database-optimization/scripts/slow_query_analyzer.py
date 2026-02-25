@@ -80,7 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description="Analyze SQL logs for slow queries and N+1 patterns.")
     parser.add_argument("--log-file", required=True, help="Path to SQL log file")
     parser.add_argument("--threshold", default=500.0, type=float, help="Slow query threshold in ms")
-    parser.add_argument("--n-plus-one-threshold", default=20, type=int, help="Min repetition count for N+1 detection")
+    parser.add_argument("--n-plus-one-threshold", default=5, type=int, help="Min repetition count for N+1 detection")
     parser.add_argument("--json", action="store_true", help="Output report as JSON")
     args = parser.parse_args()
 

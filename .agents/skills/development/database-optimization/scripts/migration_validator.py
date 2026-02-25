@@ -7,8 +7,10 @@ from pathlib import Path
 RISKY_PATTERNS = [
     ("HIGH", re.compile(r"\bdrop\s+table\b", re.IGNORECASE), "DROP TABLE detected."),
     ("HIGH", re.compile(r"\bdrop\s+column\b", re.IGNORECASE), "DROP COLUMN detected."),
+    ("HIGH", re.compile(r"\balter\s+table\b.*\bmodify\s+column\b", re.IGNORECASE), "MODIFY COLUMN detected — type change may truncate data or cause lock."),
+    ("MED", re.compile(r"\brename\s+column\b", re.IGNORECASE), "RENAME COLUMN detected — breaks compatibility with existing queries/ORMs."),
     ("MED", re.compile(r"\balter\s+table\b.*\badd\s+column\b.*\bdefault\b", re.IGNORECASE), "ADD COLUMN with DEFAULT may lock large tables."),
-    ("MED", re.compile(r"\bcreate\s+index\b(?!.*concurrently)", re.IGNORECASE), "CREATE INDEX without CONCURRENTLY."),
+    ("MED", re.compile(r"\bcreate\s+index\b(?!.*concurrently)", re.IGNORECASE), "CREATE INDEX without CONCURRENTLY — locks table during index build on large tables."),
 ]
 
 

@@ -30,7 +30,7 @@ python .agent_scripts/ai-engineering_prompt-design/ab_evaluator.py [options]
 
 ### 1. Cost Estimator
 
-Calculates the exact token footprint of a specific prompt template against various models (Claude Sonnet 4.6, GPT-4o, Gemini 2.0 Flash) based on their specific tokenizers.
+Calculates the exact token footprint of a specific prompt template against various models (Claude Sonnet 4.6, GPT-4o, Gemini 3.1 Pro) based on their specific tokenizers.
 
 **Features:**
 - Highlights the most expensive context blocks.
